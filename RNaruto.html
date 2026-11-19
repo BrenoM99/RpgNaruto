@@ -138,6 +138,17 @@ select{cursor:pointer}
 .bar2 span{position:relative;display:block;text-align:center;line-height:26px;color:#fff;font-weight:bold;text-shadow:0 1px 2px #000}
 .stp{display:flex;align-items:center;justify-content:center;gap:6px}
 .stp output{font-size:24px!important;min-width:46px}
+.panel>h2.hj{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 12px;padding:4px 12px;text-align:left}
+.cds{font-family:'Caveat Brush',cursive;font-size:20px;color:var(--cream);letter-spacing:.3px}.cds output{font-size:26px;color:var(--gold)}
+.vh small{font-family:'Patrick Hand',sans-serif;font-size:14px}
+.bar2.sb .fill{background:linear-gradient(#66bb6a,#2e7d32)}
+.bar2.bk .fill{background:linear-gradient(#ffb74d,#e65100)}
+.tags{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.tg{font-family:'Patrick Hand',sans-serif;font-size:14px;background:var(--cream);color:var(--brown);padding:0 8px;border-radius:10px;white-space:nowrap}
+.tg.ok{background:#2e7d32;color:#fff}.tg.no{opacity:.75}
+.wr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px;background:var(--field);border-top:3px solid var(--gold)}
+.wb{display:inline-flex!important;align-items:center;gap:4px;border:2px solid var(--brown)!important;border-radius:4px;padding:2px 8px!important;color:var(--brown)}
+.wb svg{width:26px;height:26px}.wr small{color:var(--brown2);margin-left:auto}
 </style>
 </head>
 <body>
@@ -203,12 +214,16 @@ function open(id){
       ${ATTRS.map(a=>`<div class="at ${a}">${f("a_"+a,"number")}<span>${a}</span></div>`).join("")}
      </div>
      <div class="vit">
-      <div><div class="mini">Defesa (CD)<output id="o_cd">0</output><small>Equipamento</small>${f("equip","number","num")}</div><div class="mini">Substituição<div class="stp"><button class="vbtn" data-bar="sub" data-d="-1" aria-label="Diminuir Substituição">−</button><output id="o_subc">0/0</output><button class="vbtn" data-bar="sub" data-d="1" aria-label="Aumentar Substituição">+</button></div><small id="o_subn">Nível 1</small><output id="o_sub" style="display:none">0</output></div></div>
+      <div><div class="mini">Defesa (CD)<output id="o_cd">0</output><small>Equipamento</small>${f("equip","number","num")}</div></div>
       <div>
        <div class="vh">Pontos de Vida (PV)</div>
        <div class="vb"><button class="vbtn" data-bar="pv" data-d="-1" aria-label="Diminuir PV">−</button><div class="bar2 pv"><div class="fill" id="f_pv"></div><span id="t_pv">0 / 0</span></div><button class="vbtn" data-bar="pv" data-d="1" aria-label="Aumentar PV">+</button><output id="o_pvm" style="display:none">0</output></div>
        <div class="vh">Chakra (CK)</div>
        <div class="vb"><button class="vbtn" data-bar="pc" data-d="-1" aria-label="Diminuir CK">−</button><div class="bar2 pc"><div class="fill" id="f_pc"></div><span id="t_pc">0 / 0</span></div><button class="vbtn" data-bar="pc" data-d="1" aria-label="Aumentar CK">+</button><output id="o_pcm" style="display:none">0</output></div>
+       <div class="vh">Substituição <small id="o_subn">Nível 1</small></div>
+       <div class="vb"><button class="vbtn" data-bar="sub" data-d="-1" aria-label="Diminuir Substituição">−</button><div class="bar2 sb"><div class="fill" id="f_sub"></div><span id="t_sub">0 / 0</span></div><button class="vbtn" data-bar="sub" data-d="1" aria-label="Aumentar Substituição">+</button><output id="o_sub" style="display:none">0</output></div>
+       <div id="bckrow" style="display:none"><div class="vh">Chakra de Bijuu <small id="bckn"></small></div>
+       <div class="vb"><button class="vbtn" data-bar="bck" data-d="-1" aria-label="Diminuir chakra de Bijuu">−</button><div class="bar2 bk"><div class="fill" id="f_bck"></div><span id="t_bck">0 / 0</span></div><button class="vbtn" data-bar="bck" data-d="1" aria-label="Aumentar chakra de Bijuu">+</button><output id="o_bck" style="display:none">0</output></div></div>
       </div>
      </div>
     </div>
@@ -216,14 +231,9 @@ function open(id){
      <div class="ph" style="margin-bottom:4px">Toque no nome da perícia para rolar 1d20</div><div class="per ph"><span></span><span></span><span>Atr.</span><span></span><span>Trein.</span><span></span><span>Outros</span><span></span><span>Total</span></div>${SK.map(([n,a],i)=>`<div class="per"><input type="checkbox" data-k="sk${i}_t" title="Treinada"><button class="n rl" data-roll="${i}" title="Rolar d20">${n} (${a})</button><output data-attr="${a}">0</output><span>+</span><output data-tr="${i}">0</output><span>+</span>${f("sk"+i+"_b","number")}<span>=</span><output data-tot="${i}" data-a="${a}">0</output></div>`).join("")}
     </div></div>
    </div>
-   <div class="grid">
-    <div class="panel"><h2>Ataques</h2><div class="body">
-     <div class="atk h"><span>Arma</span><span>Bônus no teste</span><span>Dano</span><span>Crítico</span></div>
-     ${[0,1,2,3,4].map(i=>`<div class="atk">${f("at"+i+"_w")}${f("at"+i+"_b","text","num")}${f("at"+i+"_d","text","num")}${f("at"+i+"_c","text","num")}</div>`).join("")}
-    </div></div>
-    <div class="panel"><h2>Inventário</h2><div class="body" id="L_inv"></div></div>
+   <div class="grid" style="grid-template-columns:1fr"><div class="panel"><h2>Inventário</h2><div class="body" id="L_inv"></div></div>
    </div>
-   </div><div class="pg"><div class="panel full"><h2>Lista de Jutsus</h2><div class="body" id="L_jut"></div></div>
+   </div><div class="pg"><div class="panel full"><h2 class="hj"><span>Lista de Jutsus</span><span class="cds">CD Nin <output id="o_cdn">10</output> · CD Gen <output id="o_cdg">10</output></span></h2><div class="body" id="L_jut"></div></div>
    <div class="panel full"><h2>Poderes e Habilidades</h2><div class="body"><div id="L_hab"></div><div class="two" style="margin-top:8px"><div><label class="lbl" style="color:var(--brown)">Afinidade elementar</label>${sel("elem",EL,true)}</div><div><label class="lbl" style="color:var(--brown)">Segunda afinidade</label>${sel("elem2",EL,true)}</div></div></div></div></div></div>
    <div class="panel full"><h2>Dados</h2><div class="body" id="dice"></div></div>
   </div>`;
@@ -237,12 +247,24 @@ function open(id){
   E("sheet").oninput=E("sheet").onchange=e=>{
     const el=e.target;if(!el.dataset||!el.dataset.k)return;
     DB[cur][el.dataset.k]=el.type==="checkbox"?el.checked:el.value;
-    calc();stat("Salvando…");clearTimeout(timer);timer=setTimeout(persist,300);
+    calc();if(/^elem2?$/.test(el.dataset.k))renderList("jut");stat("Salvando…");clearTimeout(timer);timer=setTimeout(persist,300);
   };
   location.hash=id;
 }
 const PAT={Nenhuma:0,Gennin:0,Chunnin:4,Jounin:4,Hokage:5};
 const SUBB=[0,2,3,4];
+const BIJU=[["shukaku",35,14],["matatabi",30,12],["isobu",25,10],["son gokuu",35,14],["kokuou",25,10],["saiken",25,10],["choumei",30,12],["gyuuki",35,14],["kurama",40,15]];
+const hn=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const fmtN=v=>(Math.round(v*100)/100).toLocaleString("pt-BR");
+const ESP_RE=/Espa[çc]o\s*(\d+(?:[.,]\d+)?)/i;
+function itemSp(x){if(typeof x.s==="number")return x.s;const m=ESP_RE.exec(x.b||"");return m?Number(m[1].replace(",",".")):0}
+function updInv(){
+  const el=E("invsp");if(!el||!cur)return;const d=DB[cur]||{};
+  let max=5+(Number(d.a_FOR)||0);
+  ((d.L||{}).hab||[]).forEach(x=>{if(/^organizado/.test(hn(x.t)))max+=/\bmen(te)?\b/i.test(x.b||"")?(Number(d.a_MEN)||0):3});
+  const used=((d.L||{}).inv||[]).reduce((s,x)=>s+itemSp(x),0);
+  el.textContent="Espaço: "+fmtN(used)+" / "+fmtN(max);el.style.color=used>max?"#a3281f":"";el.style.fontWeight="bold";
+}
 function ageBase(a){if(!a)return[0,0];if(a<=14)return[10,10];if(a<=19)return[13,12];if(a<=41)return[16,13];return[13,12]}
 const PAL={
 sephy:{"--paper1":"#f3f4fc","--paper2":"#c6cbea","--brown":"#3b2f5e","--brown2":"#5b5a99","--cream":"#f4f6fb","--gold":"#9fb0dc","--field":"#fbfcff","--ink":"#1f1a33"},
@@ -259,16 +281,21 @@ function calc(){
   document.querySelectorAll("[data-tr]").forEach(o=>o.value=d["sk"+o.dataset.tr+"_t"]?lvl:0);
   document.querySelectorAll("[data-tot]").forEach(o=>{const i=+o.dataset.tot;tot[i]=n("a_"+o.dataset.a)+(d["sk"+i+"_t"]?lvl:0)+n("sk"+i+"_b");o.value=tot[i]});
   E("o_pvm").value=pvB+(PAT[d.patente]||0)+up*(3+n("a_CON"));
-  E("o_pcm").value=7+up*(1+n("a_ESP"));
-  E("o_cd").value=cdB+tot[4]+n("equip");
+  const habs=((d.L||{}).hab||[]).map(x=>hn(x.t));let pcb=0,bj=null;
+  habs.forEach(t=>{if(/chakra (incessante|ilimitado)/.test(t))pcb+=2*lvl});
+  for(const b of BIJU){if(habs.some(t=>t.includes(b[0]))){bj=b;break}}
+  if(bj)pcb+=bj[2];
+  E("o_pcm").value=7+up*(1+n("a_ESP"))+pcb;
+  E("o_bck").value=bj?bj[1]:0;E("bckrow").style.display=bj?"":"none";E("bckn").textContent=bj?"("+bj[0]+")":"";
+  E("o_cdn").value=10+(tot[14]||0);E("o_cdg").value=10+(tot[11]||0);
+  E("o_cd").value=cdB+(tot[4]||0)+n("equip");
   const sl=lvl>=10?3:lvl>=5?2:1;E("o_sub").value=SUBB[sl]+n("a_PRE");E("o_subn").textContent="Nível "+sl+" (+"+SUBB[sl]+")";
-  [["pv","o_pvm"],["pc","o_pcm"],["sub","o_sub"]].forEach(([k,o])=>{
+  [["pv","o_pvm"],["pc","o_pcm"],["sub","o_sub"],["bck","o_bck"]].forEach(([k,o])=>{
     const max=Number(E(o).value)||0;let c=d[k+"_at"];
     c=(c===undefined||c==="")?max:Math.min(Math.max(Number(c)||0,0),max);
-    if(k==="sub")E("o_subc").value=c+"/"+max;
-    else{E("f_"+k).style.width=(max?c/max*100:0)+"%";E("t_"+k).textContent=c+" / "+max}
+    E("f_"+k).style.width=(max?c/max*100:0)+"%";E("t_"+k).textContent=c+" / "+max;
   });
-  window.TOT=tot;applyPal();
+  window.TOT=tot;updInv();applyPal();
 }
 
 const LB={inv:"Novo Item",jut:"Novo Jutsu",hab:"Nova Habilidade"};
@@ -276,15 +303,42 @@ const ED=new WeakSet(),CF=new WeakSet();
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function arr(k){const L=DB[cur].L=DB[cur].L||{};return L[k]=L[k]||[]}
 function renderAll(){for(const k in LB)renderList(k)}
+const ELOPT=["Ar","Água","Terra","Fogo","Raio"];
+function elOf(s){s=hn(s);return/fogo|katon/.test(s)?"Fogo":/vento|futon/.test(s)?"Ar":/agua|suiton/.test(s)?"Água":/terra|doton/.test(s)?"Terra":/raio|raiton/.test(s)?"Raio":""}
+function jCost(x){if(typeof x.c==="number")return x.c;const m=/(\d+)\s*ck/i.exec(x.b||"");return m?+m[1]:null}
+function jEl(x){return x.e!==undefined?x.e:elOf(x.t)}
+function parseWeapon(x){
+  const t=x.b||"",d=/(\d+)d(\d+)/.exec(t);
+  if(!d||!/cr[ií]tico/i.test(t))return null;
+  let margin=20,mult=2;const c=/cr[ií]tico\s*([^\s·]+)/i.exec(t);
+  if(c)c[1].split("/").forEach(s=>{s=s.trim();if(/^\d+x$/i.test(s))mult=parseInt(s);else if(/^\d+$/.test(s))margin=parseInt(s)});
+  return{n:+d[1],f:+d[2],margin,mult};
+}
+function rollAtk(x,si){
+  const w=parseWeapon(x);if(!w)return;
+  const mod=(window.TOT||[])[si]||0,nat=rnd(20),hit=nat+mod,crit=nat>=w.margin;
+  const nd=w.n*(crit?w.mult:1),rolls=Array.from({length:nd},()=>rnd(w.f)),dmg=rolls.reduce((a,b)=>a+b,0);
+  const expr=nd+"d"+w.f;
+  toast(`${x.t} (${SK[si][0]}): d20 (${nat}) + ${mod} = ${hit}${crit?" · CRÍTICO":""} · dano ${expr} = ${dmg}`);
+  send({who:CHARS.find(c=>c[0]===cur)[1],label:x.t+" · "+SK[si][0],atk:true,nat,mod,hit,crit,mult:w.mult,expr,rolls,total:dmg});
+}
 function renderList(k){
-  const a=arr(k);
-  E("L_"+k).innerHTML=`<div class="lh"><button class="btn nb" data-act="pick" data-l="${k}">Escolher do livro</button><button class="btn nb" data-act="new" data-l="${k}">${LB[k]}</button></div>`+(a.length?"":`<p class="empty">Nada por aqui ainda.</p>`)+a.map((x,i)=>{
-    const ed=ED.has(x);
-    return `<div class="it" data-l="${k}" data-i="${i}"><button class="ith" data-act="tog" aria-expanded="${!!x.o}"><span class="chev">${x.o?"▴":"▾"}</span><b>${esc(x.t)||"Sem título"}</b></button>`+(x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título"><textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
+  const a=arr(k),d=DB[cur]||{},aff=[d.elem,d.elem2].filter(Boolean);
+  const idx=a.map((_,i)=>i);
+  if(k==="jut")idx.sort((p,q)=>(jCost(a[p])??1e9)-(jCost(a[q])??1e9)||p-q);
+  E("L_"+k).innerHTML=`<div class="lh">${k==="inv"?'<span id="invsp" style="margin-right:auto"></span>':""}<button class="btn nb" data-act="pick" data-l="${k}">Escolher do livro</button><button class="btn nb" data-act="new" data-l="${k}">${LB[k]}</button></div>`+(a.length?"":`<p class="empty">Nada por aqui ainda.</p>`)+idx.map(i=>{
+    const x=a[i],ed=ED.has(x);
+    let tags="";
+    if(k==="jut"){const c=jCost(x),e=jEl(x),ok=aff.includes(e);tags=`<span class="tags">${c!=null?`<span class="tg">${c} Ck</span>`:""}${e?`<span class="tg ${ok?"ok":"no"}">${e}${ok?" ✓ afinidade":""}</span>`:""}</span>`}
+    const w=k==="inv"?parseWeapon(x):null;
+    return `<div class="it" data-l="${k}" data-i="${i}"><button class="ith" data-act="tog" aria-expanded="${!!x.o}"><span class="chev">${x.o?"▴":"▾"}</span><b>${esc(x.t)||"Sem título"}</b>${k==="inv"&&itemSp(x)?`<small style="margin-left:auto;margin-right:8px">${fmtN(itemSp(x))} esp.</small>`:""}${tags}</button>`+
+    (w?`<div class="wr"><button class="lk wb" data-act="atk" data-s="0">${dieSVG(20)}Taijutsu</button><button class="lk wb" data-act="atk" data-s="3">${dieSVG(20)}Pontaria</button><small>${w.n}d${w.f}${w.margin<20?" · crít. "+w.margin+"+":""} · ×${w.mult}</small></div>`:"")+
+    (x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título">${k==="inv"?`<input class="es" type="number" step="0.25" min="0" placeholder="Espaço do item" value="${typeof x.s==="number"?x.s:itemSp(x)||""}" style="margin-top:6px">`:""}${k==="jut"?`<div class="cr" style="margin-top:6px"><input class="ec" type="number" min="0" placeholder="Custo de Ck" value="${jCost(x)??""}"><select class="ee"><option value="">Sem elemento</option>${ELOPT.map(o=>`<option${jEl(x)===o?" selected":""}>${o}</option>`).join("")}</select></div>`:""}<textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
   }).join("");
+  if(k==="inv")updInv();
 }
 function barStep(k,dl){
-  const d=DB[cur],max=Number(E({pv:"o_pvm",pc:"o_pcm",sub:"o_sub"}[k]).value)||0;
+  const d=DB[cur],max=Number(E({pv:"o_pvm",pc:"o_pcm",sub:"o_sub",bck:"o_bck"}[k]).value)||0;
   let c=d[k+"_at"];c=(c===undefined||c==="")?max:Number(c)||0;
   d[k+"_at"]=Math.min(Math.max(c+dl,0),max);calc();persist();
 }
@@ -298,13 +352,14 @@ function listClick(e){
   else{
     const it=a.closest(".it");if(!it)return;
     k=it.dataset.l;const i=+it.dataset.i,L=arr(k),x=L[i];
+    if(act==="atk"){rollAtk(x,+a.dataset.s);return}
     if(act==="tog")x.o=!x.o;
     else if(act==="ed")ED.add(x);
     else if(act==="cx"){ED.delete(x);if(!x.t&&!x.b)L.splice(i,1)}
-    else if(act==="sv"){x.t=it.querySelector(".et").value.trim();x.b=it.querySelector(".eb").value;ED.delete(x)}
+    else if(act==="sv"){x.t=it.querySelector(".et").value.trim();const ec=it.querySelector(".ec"),ee=it.querySelector(".ee");if(ec)x.c=ec.value===""?undefined:Number(ec.value);if(ee)x.e=ee.value;const es=it.querySelector(".es");if(es)x.s=Number(es.value)||0;x.b=it.querySelector(".eb").value;ED.delete(x)}
     else if(act==="rm"){if(CF.has(x))L.splice(i,1);else CF.add(x)}
   }
-  renderList(k);persist();
+  renderList(k);calc();persist();
 }
 
 let ROLLS=[];const DEL=new Set();
@@ -329,7 +384,7 @@ function drawChat(){
     return false;
   });
   E("clog").innerHTML=live.length?live.map(r=>`<div class="ri"><b>${esc(r.who)}</b> · ${esc(r.label)}<br>`+
-    (r.skill?`Dado natural <b>${r.rolls[0]}</b> + ${r.mod} = <b>${r.total}</b>`:`${r.det?esc(r.det):"["+r.rolls.join(", ")+"]"} = <b>${r.total}</b>`)+
+    (r.skill?`Dado natural <b>${r.rolls[0]}</b> + ${r.mod} = <b>${r.total}</b>`:r.atk?`Ataque: dado natural <b>${r.nat}</b> + ${r.mod} = <b>${r.hit}</b>${r.crit?" · <b>CRÍTICO ×"+r.mult+"</b>":""}<br>Dano ${r.expr}: [${r.rolls.join(", ")}] = <b>${r.total}</b>`:`${r.det?esc(r.det):"["+r.rolls.join(", ")+"]"} = <b>${r.total}</b>`)+
     `<small>${fmt(r.ts)}</small></div>`).join(""):`<p class="empty">Nenhuma rolagem nos últimos 8 minutos.</p>`;
 }
 setInterval(drawChat,15000);drawChat();
@@ -574,7 +629,7 @@ E("pk").onclick=e=>{if(e.target===E("pk"))E("pk").classList.add("hidden")};
 E("pkl").onclick=e=>{
   const b=e.target.closest(".pe");if(!b||!cur)return;
   const x=CAT[CATK[PK]][+b.dataset.i];
-  arr(PK).push({t:x[1],b:x[2],o:false});renderList(PK);persist();toast("Adicionado: "+x[1]);E("pk").classList.add("hidden");
+  const o={t:x[1],b:x[2],o:false};if(PK==="jut"){const m=/(\d+)\s*Ck/.exec(x[0])||/(\d+)\s*Ck/.exec(x[2]);if(m)o.c=+m[1];o.e=elOf(x[0]+" "+x[1])}if(PK==="inv"){const m=ESP_RE.exec(x[2]);if(m)o.s=Number(m[1].replace(",","."))}arr(PK).push(o);renderList(PK);calc();persist();toast("Adicionado: "+x[1]);E("pk").classList.add("hidden");
 };
 const STD=[20,12,10,8,6,4,2];let DS={},CUST=[],DRES="";
 function dieSVG(n){
