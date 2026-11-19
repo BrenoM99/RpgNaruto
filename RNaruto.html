@@ -107,6 +107,27 @@ select{cursor:pointer}
 .ri{border-bottom:1px solid rgba(91,52,32,.25);padding:6px 0}
 .ri small{display:block;color:var(--brown2);font-size:14px}
 .err{color:#a3281f;min-height:1.2em;margin:0}
+
+.spread{display:block}.pg{min-width:0}
+.lh{gap:8px;flex-wrap:wrap}
+@media(min-width:1000px){.wrap:has(#sheet:not(.hidden)){max-width:1560px}
+.spread{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.pg{background:rgba(255,248,230,.55);border:2px solid var(--brown);border-radius:4px;padding:10px}
+.pg>.panel.full:first-child{margin-top:0}}
+.dr{display:flex;flex-wrap:wrap;gap:10px}
+.dd{display:flex;flex-direction:column;align-items:center}
+.dsel{all:unset;cursor:pointer;position:relative;width:72px;text-align:center}
+.dsel svg{width:72px;height:72px}.dsel:focus-visible{outline:3px solid var(--gold)}
+.dsel:active svg{transform:scale(.92)}
+.dn{display:block;font-family:'Caveat Brush',cursive;color:var(--brown)}
+.db{position:absolute;top:-4px;right:-4px;background:var(--brown);color:var(--cream);border-radius:50%;min-width:24px;height:24px;display:grid;place-items:center;font-size:14px}
+.pk{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.pk.hidden{display:none}
+.pkb{background:var(--paper1);width:min(720px,100%);max-height:85vh;overflow:auto;border-radius:10px 10px 0 0;padding:12px;border:3px solid var(--brown)}
+.pkh{position:sticky;top:-12px;background:var(--paper1);padding-bottom:6px}
+.pkb h3{color:var(--brown);margin:10px 0 4px;font-size:22px}
+.pe{all:unset;display:block;width:100%;box-sizing:border-box;cursor:pointer;padding:8px;border-bottom:1px solid rgba(91,52,32,.25)}
+.pe:hover,.pe:focus-visible{background:var(--field)}.pe small{display:block;color:var(--brown2)}
 </style>
 </head>
 <body>
@@ -116,8 +137,7 @@ select{cursor:pointer}
     <p>Escolha seu personagem</p>
     <div class="cards" id="cards"></div>
     <div class="panel chat"><h2>Chat de dados</h2><div class="body">
-      <div class="cr"><select id="cwho" aria-label="Quem está rolando"></select><input id="cin" placeholder="Ex.: 2d6" autocomplete="off" aria-label="Dados no formato XdY"><button class="btn" id="csend">Rolar</button></div>
-      <p class="err" id="cerr"></p><p id="chatst" class="empty"></p><div id="clog"></div>
+      <p id="chatst" class="empty"></p><div id="clog"></div>
     </div></div>
   </div>
   <div id="sheet" class="hidden"></div>
@@ -160,7 +180,7 @@ function open(id){
   E("menu").classList.add("hidden");E("sheet").classList.remove("hidden");
   E("sheet").innerHTML=`
   <label class="pal"><input type="checkbox" data-k="pal"> Paleta</label><div class="bar"><button class="btn" id="back">‹ Personagens</button><img class="sav" alt="" src="${IMG[id]}"><span class="brush" style="font-size:26px">${name}</span><span class="saved" id="st">Salvo automaticamente</span></div>
-  <div class="frame">
+  <div class="frame"><div class="spread"><div class="pg">
    <div class="head">
     <div><label>Nome</label>${f("nome")}</div><div><label>Idade</label>${f("idade","number","num")}</div><div><label>Jogador</label>${f("jogador")}</div>
     <div><label>Clã</label>${f("cla")}</div><div><label>Nível</label><input data-k="nivel" type="number" min="1" max="15" class="num"></div><div><label>Patente</label>${sel("patente",["Nenhuma","Gennin","Chunnin","Jounin","Hokage"])}</div>
@@ -191,22 +211,23 @@ function open(id){
     </div></div>
     <div class="panel"><h2>Inventário</h2><div class="body" id="L_inv"></div></div>
    </div>
-   <div class="panel full"><h2>Lista de Jutsus</h2><div class="body" id="L_jut"></div></div>
-   <div class="panel full"><h2>Habilidades</h2><div class="body"><div id="L_hab"></div><div class="two" style="margin-top:8px"><div><label class="lbl" style="color:var(--brown)">Afinidade elementar</label>${sel("elem",EL,true)}</div><div><label class="lbl" style="color:var(--brown)">Segunda afinidade</label>${sel("elem2",EL,true)}</div></div></div></div>
+   </div><div class="pg"><div class="panel full"><h2>Lista de Jutsus</h2><div class="body" id="L_jut"></div></div>
+   <div class="panel full"><h2>Poderes e Habilidades</h2><div class="body"><div id="L_hab"></div><div class="two" style="margin-top:8px"><div><label class="lbl" style="color:var(--brown)">Afinidade elementar</label>${sel("elem",EL,true)}</div><div><label class="lbl" style="color:var(--brown)">Segunda afinidade</label>${sel("elem2",EL,true)}</div></div></div></div></div></div>
+   <div class="panel full"><h2>Dados</h2><div class="body" id="dice"></div></div>
   </div>`;
   const d=DB[id],DEF={idade:13,nivel:1,patente:"Nenhuma"};ATTRS.forEach(a=>DEF["a_"+a]=0);for(const k in DEF)if(d[k]===undefined||d[k]==="")d[k]=DEF[k];
   E("sheet").querySelectorAll("[data-k]").forEach(el=>{
     const v=d[el.dataset.k];
     if(el.type==="checkbox")el.checked=!!v;else if(v!==undefined)el.value=v;
   });
-  calc();renderAll();E("sheet").onclick=listClick;
+  calc();renderAll();E("sheet").onclick=listClick;DS={};DRES="";renderDice();E("dice").onclick=diceClick;
   E("back").onclick=()=>{E("sheet").classList.add("hidden");E("menu").classList.remove("hidden");cur=null;applyPal();history.replaceState(null,"",location.pathname)};
   E("sheet").oninput=E("sheet").onchange=e=>{
     const el=e.target;if(!el.dataset||!el.dataset.k)return;
     DB[cur][el.dataset.k]=el.type==="checkbox"?el.checked:el.value;
     calc();stat("Salvando…");clearTimeout(timer);timer=setTimeout(persist,300);
   };
-  E("cwho").value=id;location.hash=id;
+  location.hash=id;
 }
 const PAT={Nenhuma:0,Gennin:0,Chunnin:4,Jounin:4,Hokage:5};
 const SUBB=[0,2,3,4];
@@ -239,7 +260,7 @@ function arr(k){const L=DB[cur].L=DB[cur].L||{};return L[k]=L[k]||[]}
 function renderAll(){for(const k in LB)renderList(k)}
 function renderList(k){
   const a=arr(k);
-  E("L_"+k).innerHTML=`<div class="lh"><button class="btn nb" data-act="new" data-l="${k}">${LB[k]}</button></div>`+(a.length?"":`<p class="empty">Nada por aqui ainda.</p>`)+a.map((x,i)=>{
+  E("L_"+k).innerHTML=`<div class="lh"><button class="btn nb" data-act="pick" data-l="${k}">Escolher do livro</button><button class="btn nb" data-act="new" data-l="${k}">${LB[k]}</button></div>`+(a.length?"":`<p class="empty">Nada por aqui ainda.</p>`)+a.map((x,i)=>{
     const ed=ED.has(x);
     return `<div class="it" data-l="${k}" data-i="${i}"><button class="ith" data-act="tog" aria-expanded="${!!x.o}"><span class="chev">${x.o?"▴":"▾"}</span><b>${esc(x.t)||"Sem título"}</b></button>`+(x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título"><textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
   }).join("");
@@ -248,6 +269,7 @@ function listClick(e){
   const rr=e.target.closest("[data-roll]");if(rr){rollSkill(+rr.dataset.roll);return}
   const a=e.target.closest("[data-act]");if(!a)return;
   const act=a.dataset.act;let k;
+  if(act==="pick"){openPick(a.dataset.l);return}
   if(act==="new"){k=a.dataset.l;const x={t:"",b:"",o:true};arr(k).push(x);ED.add(x)}
   else{
     const it=a.closest(".it");if(!it)return;
@@ -262,7 +284,6 @@ function listClick(e){
 }
 
 let ROLLS=[];const DEL=new Set();
-E("cwho").innerHTML=CHARS.map(([i,n])=>`<option value="${i}">${n}</option>`).join("");
 const fmt=ts=>new Date(ts).toLocaleString("pt-BR");
 function toast(t){const x=E("toast");x.textContent=t;x.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>x.classList.remove("on"),4500)}
 function send(rec){
@@ -284,21 +305,9 @@ function drawChat(){
     return false;
   });
   E("clog").innerHTML=live.length?live.map(r=>`<div class="ri"><b>${esc(r.who)}</b> · ${esc(r.label)}<br>`+
-    (r.skill?`Dado natural <b>${r.rolls[0]}</b> + ${r.mod} = <b>${r.total}</b>`:`[${r.rolls.join(", ")}] = <b>${r.total}</b>`)+
+    (r.skill?`Dado natural <b>${r.rolls[0]}</b> + ${r.mod} = <b>${r.total}</b>`:`${r.det?esc(r.det):"["+r.rolls.join(", ")+"]"} = <b>${r.total}</b>`)+
     `<small>${fmt(r.ts)}</small></div>`).join(""):`<p class="empty">Nenhuma rolagem nos últimos 8 minutos.</p>`;
 }
-function chatRoll(){
-  const m=/^\s*(\d{1,3})d(\d{1,4})\s*$/i.exec(E("cin").value);
-  const x=m&&+m[1],y=m&&+m[2];
-  if(!m||x<1||x>100||y<2){E("cerr").textContent="Formato inválido. Use XdY, por exemplo 2d6.";return}
-  E("cerr").textContent="";
-  const rolls=Array.from({length:x},()=>rnd(y));
-  send({who:CHARS.find(c=>c[0]===E("cwho").value)[1],label:x+"d"+y,rolls,total:rolls.reduce((a,b)=>a+b,0)});
-  E("cin").value="";
-}
-E("csend").onclick=chatRoll;
-E("cin").onkeydown=e=>{if(e.key==="Enter")chatRoll()};
-E("cin").oninput=()=>E("cerr").textContent="";
 setInterval(drawChat,15000);drawChat();
 
 function push(){
@@ -345,8 +354,256 @@ else{
     ROLLS=Object.entries(RM).map(([id,v])=>({...v,id})).sort((a,b)=>b.ts-a.ts);drawChat();
   },ok=>{E("chatst").textContent=ok?"":"Reconectando ao chat…"});
 }
+const mk=s=>s.trim().split("\n").map(l=>l.split("|"));
+const CAT={
+jut:mk(`
+Rank D · 1 Ck|Jutsu de Substituição|Reação · Pessoal · Instantânea. Aumenta a Defesa ou o Reflexo em +5. Custa 1 Ck.
+Rank D · 1 Ck|Jutsu de Transformação|Padrão · Pessoal · Cena · Percepção desacredita. +10 em Enganação para disfarçar; não recebe habilidades da nova forma. Verdadeiro (+2 Ck, nível 4): transforma outro ser em alcance curto; se não for voluntário, teste de Vontade anula.
+Rank D · 1 Ck|Entrada Dinâmica|Padrão · Médio · 1 Ser. Chute voador: 1d10+For. Precisa estar a 12 m do adversário. Verdadeiro (+2 Ck, nível 4): alvo é acertado como desprevenido e o dano vira 2d8+For.
+Rank D · 1 Ck|Estilo Terra: Técnica da Decapitação Suicida|Padrão · Toque · 1 Pessoa · Reflexo anula. Alvo preso no solo só com a cabeça, Vulnerável (-5 Defesa); sai com Atletismo CD 13 (ação de movimento). Verdadeiro (+2 Ck): primeiro teste com desvantagem e CD 16.
+Rank D · 1 Ck|Furacão da Folha|Padrão · Toque · 1 Pessoa. Chutes giratórios: 1d8+For. Verdadeiro (+2 Ck, nível 4): se acertar, ação padrão adicional; se errar, ação de movimento.
+Rank D · 1 Ck|Shuriken de Papel|Movimento · Pessoal · Cena. Cria 4 shurikens de papel (+5 no teste para acertar). Verdadeiro (+2 Ck): shurikens ilimitadas e +2 na margem de ameaça.
+Rank D · 1 Ck|Técnica de Ocultação na Névoa|Padrão · Curto · Cena. Névoa de 12 m de diâmetro e 6 m de altura. Usuário +4 em Furtividade; outros atacam com desvantagem. Não funciona sob a água. Verdadeiro (+3 Ck, nível 5): 2d6 de dano por rodada e o +4 vale também para ataque.
+Rank D · 1 Ck|Técnica de Shuriken Manipulada|Livre · Curto · Armas de Arremesso. Acerto garantido (+5 se o inimigo já viu a técnica); pode defender de arma de arremesso. Verdadeiro (+2 Ck, nível 4): alcance Médio, crítico garantido (+10 se já viu).
+Rank D · 1 Ck|Técnica do Deslocamento Instantâneo|Movimento · Curto · Pessoal. +6 m de deslocamento e passa por inimigos despercebido. Verdadeiro (+2 Ck, nível 4): vira ação livre; atacar no mesmo turno dá vantagem se não estiver adjacente.
+Rank D · 1 Ck|Técnica de Clonagem|Padrão · Curto · Pessoal · Percepção anula. 3 clones ilusórios; se o adversário falhar na Percepção não consegue atingir você na rodada. Verdadeiro (+1 Ck, nível 3): 3 clones seus ou de outras pessoas; se passar em um, os outros permanecem.
+Rank D · 1 Ck|Vendaval da Folha|Padrão · Toque · 1 Pessoa. Rasteira giratória: 1d6+For e derruba. Verdadeiro (+2 Ck): 1d12+For, não levanta no primeiro turno, -3 de deslocamento e desvantagem para correr/fugir.
+Rank C · Taijutsu · 3 Ck|Grande Furacão da Folha|Padrão · Toque · 1 Ser. 3d4+For. Verdadeiro (+2 Ck, nível 6): 4d6+For e o alvo fica sem agir por um turno.
+Rank C · Taijutsu · 3 Ck|Impacto da Flor de Cerejeira|Padrão · Toque · 1 Ser. 1d20+For com -5 no teste para acertar; terreno difícil em 4 m de diâmetro. Verdadeiro (+3 Ck, nível 5): sem desvantagem, +1 na margem de ameaça, rola de novo o dano se tirar 1 ou 2.
+Rank C · Taijutsu · 3 Ck|Rajada de Leões|Padrão · Toque · 1 Ser. 2d6+Des. Verdadeiro (+2 Ck, nível 5): +1d6 de dano por ponto de For ou Des (o maior).
+Rank C · Genjutsu · 3 Ck|Emboscada Ilusória|Padrão · Médio · Ilusão até 6 m · Cena · Percepção desacredita. Imagem ou som simples; some se você sair a 8 m. Verdadeiro (+1 Ck): até 12 m, imagem e som combinados, odores, sensações e texturas.
+Rank C · Ninjutsu · Fogo · 3 Ck|Jutsu Bola de Fogo|Padrão · Curto · Cone 6 m · Reflexo parcial. 4d4+4 de Fogo. Verdadeiro (+3 Ck, nível 4): alcance Médio, cone 12 m, 6d6 de Fogo.
+Rank C · Ninjutsu · Fogo · 3 Ck|Técnica Flor de Fênix|Padrão · Médio · 1 Ser · Reflexo parcial. 8d2 de Fogo. Verdadeiro (+3 Ck, nível 4): 8d4 e +4 na DT.
+Rank C · Ninjutsu · Vento · 3 Ck|Grande Destruição|Padrão · Curto · Cone 8 m · Reflexo parcial. 3d5+For de Vento; empurra 8 m. Verdadeiro (+2 Ck, nível 4): desarma, -3 nas perícias por 2 turnos, 4d5.
+Rank C · Ninjutsu · Vento · 3 Ck|Palma Vendaval|Padrão · Médio · Cone 8 m · Reflexo parcial. 1d6 a 1d12 de Impacto; empurra 20 m e 10 m de altura. Verdadeiro (+2 Ck, nível 5): derruba todos os itens e -5 na defesa até o fim da cena.
+Rank C · Ninjutsu · Água · 3 Ck|Técnica da Prisão de Água|Padrão · Toque · 1 Pessoa · Sustentada · Reflexo anula. Esfera de água: imobiliza e, sem ar, 8 de dano de Água por rodada. Vida da prisão = chakra do usuário + 10. Verdadeiro (+3 Ck, nível 6): até 3 ninjas, alcance curto.
+Rank C · Ninjutsu · Água · 3 Ck|Ondas Furiosas|Padrão · Curto · Cone 9 m · Reflexo anula. 2d10 de Água; empurra 6 m. Verdadeiro (+2 Ck, nível 4): cone 15 m, empurra 12 m mesmo se esquivar.
+Rank C · Ninjutsu · Água · 3 Ck|A Técnica do Clone de Água|Padrão · Pessoal · Cena. 3 cópias ilusórias: +6 na Defesa (cada ataque que erra remove uma; cópia atingida reduz o bônus em 2). Verdadeiro (+2 Ck, nível 5): 5 cópias e +10.
+Rank C · Ninjutsu · Terra · 3 Ck|Deslocamento Subterrâneo|Movimento · Pessoal · Cena. Mergulha no solo; só pode sair ou se deslocar (dobra deslocamento); +6 Defesa e adversários atacam com desvantagem. Verdadeiro (+2 Ck, nível 5): não pode ser acertado enquanto mergulhado.
+Rank C · Ninjutsu · Terra · 3 Ck|Torneamento da Palma Rasgadora de Terra|Padrão · Curto · Esfera 5 m · Reflexo parcial. 4d4+For de Terra; -2 na defesa dos alvos. Verdadeiro (+3 Ck, nível 5): esfera 8 m, 3d8+For, -4 na defesa e 1d6 por turno na área.
+Rank C · Ninjutsu · Raio · 3 Ck|Presas do Raio Rastreador|Padrão · Curto · 1 ser · Reflexo parcial. 4d4 de Raio, +2 na DT. Verdadeiro (+2 Ck, nível 6): golpe inevitável.
+Rank C · Ninjutsu · Raio · 3 Ck|Liberação de Raio: Sobrecarga|Padrão · Pessoal · Cena. +100% de velocidade: um golpe desarmado a mais e +1 em Des. Verdadeiro (+6 Ck, nível 5): +200%, ação padrão extra, +2 em Des; no fim da cena fica 1 dia sem usar chakra.
+Rank C · Ninjutsu · Raio · 3 Ck|Corte Horizontal de Relâmpago Violento|Padrão · Toque · 1 ser. 2d8+For de Raio. Verdadeiro (+3 Ck, nível 5): cada uso na cena soma +1d8 de dano (+1d4 se errar).
+Rank C · Ninjutsu · Outros · 3 Ck|Manipulação do Moinho de Vento de Lâminas Triplas|Padrão · Toque · 1/2 seres. Até 4 shurikens que acertam sem falha. Verdadeiro (+5 Ck, nível 6): todas acertam crítico.
+Rank C · Ninjutsu · Outros · 3 Ck|Técnica de Invocação|Completo · Toque · Círculo de 3 m · Cena. Invoca criaturas ou objetos por contrato; é preciso conhecer um usuário que ofereça o contrato.
+Rank C · Ninjutsu · Outros · 3 Ck|Embuir Arma|Completo · Toque · 1 Arma · Cena. Escolha um elemento (Fogo, Raio, Terra, Ar ou Água): a arma causa +1d6 desse tipo. Verdadeiro (+2 Ck, nível 4): +1d8 e +1 no teste de acerto.
+Rank C · Ninjutsu · Outros · 3 Ck|Chakra Cíclico|Ação · Pessoal · Cena. Recebe 3d6 PV temporários até o fim da cena. Verdadeiro (+2 Ck, nível 6): 5d6+2.
+Rank B · Taijutsu · 6 Ck|Lótus Frontal|Sequência de golpes aéreos terminando com um poderoso ataque descendente.
+Rank B · Taijutsu · 6 Ck|Poderoso Furacão da Folha|Chute giratório de alta velocidade.
+Rank B · Taijutsu · 6 Ck|Facada Infernal|Ataque de lâmina extremamente preciso em pontos vitais.
+Rank B · Genjutsu · 6 Ck|Ilusão Demoníaca: Aprisionamento da Árvore Assassina|Prende o alvo em ilusão de raízes estranguladoras.
+Rank B · Genjutsu · 6 Ck|Flauta Demoníaca: Correntes Ilusórias de Som|Cria ilusões auditivas que paralisam.
+Rank B · Fogo · 6 Ck|Estilo Fogo: Bomba do Dragão Flamejante|Dragão de fogo que persegue o alvo.
+Rank B · Fogo · 6 Ck|Estilo Fogo: Grande Aniquilação por Fogo|Explosão massiva de chamas.
+Rank B · Fogo · 6 Ck|Estilo Fogo: Técnica do Grande Dragão de Fogo|Versão maior do dragão flamejante.
+Rank B · Fogo · 6 Ck|Estilo Fogo: Cinzas Ardentes|Nuvem de cinzas incandescentes.
+Rank B · Vento · 6 Ck|Estilo Vento: Atsugai|Rajada cortante de vento.
+Rank B · Vento · 6 Ck|Estilo Vento: Esfera de Vácuo|Esfera de vento comprimido.
+Rank B · Vento · 6 Ck|Estilo Vento: Onda de Vácuo|Onda de choque de ar.
+Rank B · Vento · 6 Ck|Técnica da Grande Foice da Doninha|Lâminas de vento afiadas.
+Rank B · Água · 6 Ck|Estilo Água: Cinco Tubarões Famintos|Invoca 5 tubarões de água.
+Rank B · Água · 6 Ck|Estilo Água: Formação da Parede de Água|Barreira defensiva líquida.
+Rank B · Água · 6 Ck|Estilo Água: Técnica do Grande Braço de Água|Braço gigante de água para agarrar.
+Rank B · Água · 6 Ck|Estilo Água: Onda de Impacto Explosiva|Tsunami controlado.
+Rank B · Água · 6 Ck|Mil Agulhas Voadoras de Água da Morte|Projéteis de água precisos.
+Rank B · Água · 6 Ck|Técnica do Revólver de Água|Jato de água em alta pressão.
+Rank B · Terra · 6 Ck|Estilo Terra: Muralha de Terra|Parede defensiva de rocha.
+Rank B · Terra · 6 Ck|Estilo Terra: Parede de Lama|Barreira de lama pegajosa.
+Rank B · Terra · 6 Ck|Estilo Terra: Técnica Sanduíche|Esmaga o alvo entre duas placas de terra.
+Rank B · Terra · 6 Ck|Estilo Terra: Destruição de Rochas|Desintegração de estruturas rochosas.
+Rank B · Raio · 6 Ck|Estilo Raio: Gian|Disparo direto de raio.
+Rank B · Raio · 6 Ck|Estilo Raio: Pantera Negra|Criatura de eletricidade que persegue alvos.
+Rank B · Raio · 6 Ck|Corte do Raijin Voador|Ataque de espada carregada com raio.
+Rank B · Barreiras e Selamentos · 6 Ck|Barreira: Prisão Cúpula de Terra|Cúpula de terra intransponível.
+Rank B · Barreiras e Selamentos · 6 Ck|Barreira: Formação da Cobertura|Campo de força circular.
+Rank B · Barreiras e Selamentos · 6 Ck|Fuuinjutsu: Octopus Hold|Selamento que imobiliza como tentáculos.
+Rank B · Barreiras e Selamentos · 6 Ck|Parede de Ferro Selada|Barreira metálica indestrutível.
+Rank B · Barreiras e Selamentos · 6 Ck|Método de Formação da Barreira|Técnica para criar barreiras complexas.
+Rank B · Invocações · 6 Ck|Invocação: Rashōmon|Portão gigante de defesa.
+Rank B · Invocações · 6 Ck|Invocação: Dança da Decapitação Rápida|Invoca lâminas voadoras.
+Clã Hyuuga|Byakugan|2 Ck, dura a cena. Visão de ~360° (50 m), exceto o ponto cego: não pode ser pego desprevenido, a menos que atingido nele. Vê através de objetos, barreiras, fumaça e clones. Bônus em Percepção contra seres/objetos com chakra: nível 1-4 +5, 5-9 +10, 10-14 +15, 15 +30.
+Clã Hyuuga|Punho Suave (estilo)|Ignora resistência a dano; golpes de Taijutsu usam Des e causam dano também nos Pontos de Chakra. Com o chakra do alvo em 0, cada golpe debilita uma parte do corpo.
+Clã Hyuuga|Punho Suave: Agulha de Tenketsu (Nv 2)|3d4+Des de dano no chakra.
+Clã Hyuuga|Oito Trigramas: Dezesseis Palmas (Nv 4)|2d6+Des de dano e dano no chakra. 2 Ck.
+Clã Hyuuga|Oito Trigramas: Palma Rotativa (Nv 4)|3d4+Des de dano corpo a corpo; imunidade a projéteis à distância por uma rodada. 2 Ck.
+Clã Hyuuga|Oito Trigramas: Trinta e Duas Palmas (Nv 5)|4d4+Des de dano e dano no chakra. 4 Ck.
+Clã Hyuuga|Golpe Adicional (Nv 3)|Ao atacar desarmado com o Punho Suave, gaste 1 PE para um ataque adicional de Punho Suave (sem técnicas). Nv 5: 2 PE, dois ataques. Nv 8: 3 PE, três. Nv 11: 4 PE, quatro.
+`),
+pod:mk(`
+Por nível|Controle do Chakra|Concentra chakra nas mãos e músculos: gasta Ck e ganha bônus em testes de força física (e no ataque). Nível 2: 2 Ck + 3. Nível 6: 3 Ck + 5. Nível 11: 5 Ck + 9.
+Por nível|Andar nas Paredes|Concedido no nível 3.
+Por nível|Andar na Água|Concedido no nível 4.
+Combate|Artista Marcial|Ataques desarmados causam 1d6 (podem ser letais) e pode socar 2 vezes por turno. Nível 6: 2d4. Nível 11: 2d6.
+Combate|Ataque de Oportunidade|Quando um ser sai voluntariamente de um espaço adjacente, gaste reação e 2 Ck para um ataque corpo a corpo contra ele.
+Combate|Combater com Duas Armas|Com duas armas (uma leve) e ao agredir, faz dois ataques, um com cada arma; sofre -3 nos ataques até o próximo turno. Pré-req.: Agi 2, treinado em Taijutsu ou Pontaria.
+Combate|Combate Defensivo|Ao agredir, pode sofrer -4 nos ataques até o próximo turno para receber +5 na defesa. Pré-req.: Men 2.
+Combate|Golpe Pesado|O dano dos golpes corpo a corpo aumenta em mais um dado. Pré-req.: For 2.
+Combate|Golpe Demolidor|Para quebrar ou atacar um objeto, gaste 2 Ck para causar dois dados de dano extra. Pré-req.: For 2, treinado em Taijutsu.
+Combate|Acuidade com Arma|Com arma corpo a corpo leve ou de arremesso, usa Des no lugar de For nos ataques e dano. Pré-req.: Des 1.
+Combate|Estilo de Arremesso|Armas de arremesso recebem +2 no dano e +2 nos testes de ataque. Pré-req.: treinado em Pontaria.
+Combate|Arremesso Múltiplo|Uma vez por rodada, gaste 1 Ck para um ataque adicional contra o mesmo alvo com outra arma de arremesso. Pré-req.: Des 1, Estilo de Arremesso.
+Combate|Ataque Poderoso|Em ataque corpo a corpo, pode sofrer -2 no ataque para receber +5 no dano. Pré-req.: For 2.
+Combate|Esquiva|+2 em Reflexo.
+Combate|Trespassar|Ao reduzir o alvo a 0 PV ou menos com ataque corpo a corpo, faz um ataque adicional contra outra criatura ao alcance. Pré-req.: Ataque Poderoso.
+Combate|Vitalidade|+1 PV por nível de personagem e +1 em Vontade. Pré-req.: Con 1.
+Combate|Bravura Indômita|Adjacente a 2 ou mais inimigos que possam atacar: +2 nos ataques e na margem de ameaça. Pré-req.: treinado em Vontade.
+Combate|Contra-Ataque|Uma vez por rodada, se uma criatura atacar e errar, gaste 2 Ck para um ataque corpo a corpo contra ela. Pré-req.: Combate Defensivo.
+Combate|Coragem Aguerrida|Com metade ou menos dos PV totais: +2 em testes de perícia e na Defesa. Pré-req.: treinado em Vontade.
+Combate|Estudar o Adversário|Sempre que erra um ataque, ganha +1 cumulativo nos ataques contra o mesmo alvo até o fim da cena. Pré-req.: Men 1, Conhecimento treinado.
+Combate|Na Mosca|Ataque à distância: gaste 1 Ck; se acertar, causa um dado extra de dano do mesmo tipo. Pré-req.: Estilo de Disparo ou de Arremesso.
+Combate|Precisão Letal|A margem de ameaça dos ataques aumenta em +1. Pré-req.: treinado em Pontaria.
+Combate|Sanguinário|Ao causar 10 ou mais de dano em um inimigo, recebe +2 cumulativo nas rolagens de dano até o fim da cena.
+Combate|Por um Fio|Qualquer dano que nocautearia o personagem é reduzido pela metade. Pré-req.: Con 2.
+Combate|Sede de Sangue|Ao acertar corpo a corpo, regenera metade dos PV causados de dano. Pré-req.: Sanguinário.
+Combate|Fantasma|Aumenta em +1 a quantia de Jutsus de Substituição (+2 a partir do nível 7). Pré-req.: Pre 1 (versão de Pre 2 também no livro).
+Combate|Irrefreável|Ao esquivar sem Jutsu de Substituição, ganha +1 na defesa até ser acertado novamente. Pré-req.: Reflexo treinado.
+Combate|Troca Eficiente|Aumenta o bônus do Jutsu de Substituição em +2. Pré-req.: Pre 2.
+Mente|Aumento de Atributo|Ganha um ponto de atributo para distribuir (pode ser escolhido mais de uma vez).
+Mente|Sentido Tático|Ação de movimento + 2 Ck: bônus na Defesa igual à sua Men até o fim da cena. Pré-req.: Men 2, treinado em Percepção e Estratégia.
+Mente|Conhecimento Aplicado|Em teste de perícia (exceto Taijutsu e Pontaria), gaste 2 Ck para usar Men como atributo-base. Pré-req.: Men 1.
+Mente|Nerd|Uma vez por cena, gaste 2 Ck e faça Conhecimento (DT 20): se passar, recebe uma informação útil para a cena.
+Mente|Primeira Impressão|+10 no primeiro teste de Diplomacia, Intimidação ou Intuição em uma cena. Pré-req.: Diplomacia treinada.
+Mente|Medicina|Ação completa, teste de Cura (DT 10): a criatura recupera 2d6 PV, +1d6 a cada 5 pontos acima da DT. Uma vez por dia na mesma criatura. Pré-req.: Men 1, Cura treinada.
+Mente|Sortudo|Ao fazer um teste, gaste 3 Ck para rolá-lo novamente (5 usos por cena).
+Mente|Surto Heroico|Uma vez por rodada, gaste 5 Ck para uma ação padrão ou de movimento adicional.
+Mente|Torcida|+2 em testes de perícia e Defesa quando tem torcida a favor (criaturas em alcance médio só torcendo). Pré-req.: Pre 1.
+Mente|Comandar|Ação completa e 1 Ck: aliados em alcance grande recebem +1 em todos os testes até o fim da cena. Pré-req.: Pre 1.
+Mente|Atlético|+2 em Atletismo e +3 m de deslocamento. Pré-req.: Con 2.
+Mente|Aparência Inofensiva|A primeira criatura inteligente que atacar você na cena faz Vontade (DT 10+Pre) ou perde a ação. Funciona uma vez por cena. Pré-req.: Pre 1.
+Mente|Acrobático|Usa Des no lugar de Con em Atletismo. Pré-req.: Des 2.
+Mente|Carícias Revigorantes|Gaste 1 minuto e 2 Ck para recuperar 2d4 Ck de criatura adjacente (uma vez por dia por criatura). Pré-req.: Men 2, Medicina.
+Mente|Detector de Mentiras|Treinado em Intuição (ou +2 se já for); seres sofrem -10 em Diplomacia para mentir para você. Pré-req.: Pre 2.
+Mente|Inspirar Confiança|Quando um aliado em alcance curto faz um teste, gaste 2 Ck para ele rolar de novo. Pré-req.: Pre 2.
+Mente|Exótico!|Pode usar Armas Exóticas. Pré-req.: nível 5.
+Mente|Controle Mímico|Pode usar Marionetes. Pré-req.: nível 4.
+Mente|Controle Mímico II|Pode usar DUAS Marionetes. Pré-req.: nível 7 e Controle Mímico.
+Mente|Organizado|Aumenta +3 de espaço no inventário.
+Mente|Duro na Queda|Nas salvaguardas contra a morte, um 9 conta como sucesso e um 8 não conta como falha. Pré-req.: Con 2.
+Mente|Destemido|Com PV em 0, ainda age mais uma vez antes de desmaiar. Pré-req.: Vontade treinada.
+Mente|Vontade do Fogo|Com PV em 0, levanta com 1 PV e +1 em todos os testes; se desmaiar de novo, já conta uma falha na salvaguarda contra a morte.
+Espírito|Especialista em Elemento|Escolha um elemento: a DT para resistir aos seus jutsus desse elemento aumenta em +2.
+Espírito|Identificação de Jutsu|Identifica todo ninjutsu/genjutsu que perceber.
+Espírito|Técnica Sensorial|Sente a presença de chakra ao redor: +10 em Percepção com pessoas e objetos com chakra e percebe pessoas através de paredes.
+Espírito|Mestre em Elemento|Escolha um elemento: o custo dos jutsus desse elemento diminui em 1 Ck.
+Espírito|Jutsu Potente|Soma sua Men nas rolagens de dano ou cura dos seus jutsus. Pré-req.: Men 2.
+Espírito|Jutsu Predileto|Escolha um jutsu que conhece: custo reduzido em 1 Ck (acumula com outras reduções).
+Espírito|Especialização em Jutsu|Escolha um jutsu: a DT para resistir a ele aumenta em +2. Pré-req.: Jutsu Predileto.
+Espírito|Personalidade Espiritual|+3 Ck e treinamento em Ninjutsu ou Genjutsu (ou +2 se já for treinado). Pré-req.: Men 2.
+Espírito|Execução de Especialista|Executa jutsus usando só uma mão. Pré-req.: qualquer outro Poder de Espírito.
+Espírito|Segunda Afinidade Elemental|Escolha um segundo elemento de afinidade. Pré-req.: nível 7.
+Espírito|Ninja dos 1000 Jutsus|Sem limite de jutsus que pode aprender. Pré-req.: Men 2.
+Espírito|Afinidade Elemental Menor|Seus jutsus do elemento de afinidade custam -1 Ck. Pré-req.: 2 Poderes de Espírito.
+Espírito|Afinidade Elemental Maior|Seus jutsus do elemento de afinidade causam mais um dado de dano do mesmo tipo. Pré-req.: 4 Poderes de Espírito.
+`),
+item:mk(`
+Armas leves|Adaga|Patente C · 1d6 Perfuração · Espaço 1 · Crítico 19
+Armas leves|Espada curta|Patente C · 1d6 Corte · Espaço 1 · Crítico 19
+Armas leves|Foice|Patente C · 1d6 Corte · Espaço 1 · Crítico 3x
+Armas leves|Kunai|Patente C · 1d6 Perfuração · Espaço 0,5 · Crítico 3x
+Armas leves|Nunchaku|Patente B · 2d4 Impacto · Espaço 1 · Crítico 2x
+Armas leves|Shuriken*|Patente C · 1d4 Perfuração · Espaço 0,5 · Crítico 19 · pode atacar 2 vezes no turno
+Armas leves|Agulha*|Patente C · 1d4 Perfuração · Espaço 0,25 · Crítico 3x · pode atacar 2 vezes no turno
+Armas|Clava|Patente C · 1d8 Impacto · Espaço 2 · Crítico 3x
+Armas|Lança|Patente C · 1d6 Perfuração · Espaço 2 · Crítico 18
+Armas|Katana|Patente B · 2d4 Corte · Espaço 2 · Crítico 19
+Armas|Bastão*|Patente C · 1d6 Impacto · Espaço 2 · Crítico 2x · pode atacar 2 vezes no turno
+Armas|Arco|Patente B · 1d10 Perfuração · Espaço 2 · Crítico 3x
+Armas|Corrente|Patente A · 1d10 Impacto · Espaço 2 · Crítico 19
+Armas pesadas|Marreta|Patente B · 1d10 Impacto · Espaço 3 · Crítico 2x
+Armas pesadas|Espada longa|Patente B · 2d4 Corte · Espaço 3 · Crítico 3x
+Armas pesadas|Shuriken Gigante|Patente B · 2d6 Corte · Espaço 2 · Crítico 19/3x
+Armas exóticas (exigem treinamento)|Leque|Patente C · 3d4 Vento/Corte · Espaço 2 · Crítico 2x
+Armas exóticas (exigem treinamento)|Tridente|Patente B · 1d10 Perfuração · Espaço 1 · Crítico 18
+Armas exóticas (exigem treinamento)|Marionetes|Patente B · 1d10 Corte/Perfuração · Espaço 2 · Crítico 19
+Equipamento ninja|Papel Explosivo|Patente B · Causa 4d6 de dano · Espaço 1
+Equipamento ninja|Bomba de Fumaça|Patente C · Círculo de 5 m de diâmetro coberto por névoa; quem agir precisa de teste de Percepção para agir normalmente · Espaço 1
+Equipamento ninja|Bomba Luminosa|Patente C · Todos em alcance Médio que puderem ver a bomba ficam sem agir por 2 turnos se não a evitarem · Espaço 1
+Equipamento ninja|Pílula de Comida|Patente C · Cura Chakra e Vida igual ao dobro do seu nível. 2 pílulas: Náusea (-3 em todos os testes); 3 em um dia: desmaio · Espaço 1
+Equipamento ninja|Fio de Metal (3 m)|Patente C · Ativa explosivos/armadilhas à distância · Espaço 0,5
+Equipamento ninja|Anestesia|Patente B · Deixa a criatura Atordoada por 2 rodadas e estabiliza quem está Morrendo se passar no teste (requer Cura treinada) · Espaço 0,5
+Equipamento ninja|Antídoto|Patente C · Cura qualquer veneno/doença normal ou básica · Espaço 0,5
+Equipamento ninja|Veneno|Patente C · Causa 2d4 de dano por 1d4 turnos · Espaço 0,5
+Equipamento ninja|Veneno Mortal|Patente A · Causa 3d6 de dano por 1d4 turnos · Espaço 1
+Equipamento ninja|Droga Insípida|Patente A · Quem ingerir sem perceber desmaia em minutos e depois fica horas sem condições de lutar · Espaço 0,5
+Equipamento ninja|Corda|Patente C · Corda de 9 m de comprimento · Espaço 1
+Equipamento ninja|Pomada de Cura|Patente C · Cura 1d4+Cura (ação completa para usar) · Espaço 1
+Armaduras ninja|Armadura de Malha|Patente C · +2 de CD · Espaço 1 · Penalidade -1 em testes de Destreza
+Armaduras ninja|Colete|Patente B · +4 de CD · Espaço 1,5 · Penalidade -3 em testes de Destreza
+Armaduras ninja|Armadura de Placas|Patente S · +6 de CD · Espaço 2 · Penalidade -5 em testes de Destreza
+`)};
+
+const CATK={inv:"item",jut:"jut",hab:"pod"},CATT={inv:"Itens do livro",jut:"Jutsus do livro",hab:"Poderes do livro"};
+let PK=null;
+function openPick(k){PK=k;E("pkt").textContent=CATT[k];E("pks").value="";drawPick();E("pk").classList.remove("hidden");E("pks").focus()}
+function drawPick(){
+  const q=E("pks").value.trim().toLowerCase();let g="",h="";
+  CAT[CATK[PK]].forEach((e,i)=>{
+    if(q&&!(e[1]+" "+e[2]).toLowerCase().includes(q))return;
+    if(e[0]!==g){g=e[0];h+=`<h3>${esc(g)}</h3>`}
+    h+=`<button class="pe" data-i="${i}"><b>${esc(e[1])}</b><small>${esc(e[2].slice(0,100))}${e[2].length>100?"…":""}</small></button>`;
+  });
+  E("pkl").innerHTML=h||'<p class="empty">Nada encontrado.</p>';
+}
+E("pks").oninput=drawPick;
+E("pkx").onclick=()=>E("pk").classList.add("hidden");
+E("pk").onclick=e=>{if(e.target===E("pk"))E("pk").classList.add("hidden")};
+E("pkl").onclick=e=>{
+  const b=e.target.closest(".pe");if(!b||!cur)return;
+  const x=CAT[CATK[PK]][+b.dataset.i];
+  arr(PK).push({t:x[1],b:x[2],o:false});renderList(PK);persist();toast("Adicionado: "+x[1]);
+};
+const STD=[20,12,10,8,6,4,2];let DS={},CUST=[],DRES="";
+function dieSVG(n){
+  const S='fill="var(--field)" stroke="var(--brown)" stroke-width="3" stroke-linejoin="round"',L='fill="none" stroke="var(--brown)" stroke-width="2" stroke-linejoin="round"';
+  const P={
+    20:`<polygon ${S} points="32,4 58,18 58,46 32,60 6,46 6,18"/><polygon ${L} points="32,15 49,43 15,43"/>`,
+    12:`<polygon ${S} points="32,4 59,24 49,57 15,57 5,24"/><polygon ${L} points="32,17 46,27 41,45 23,45 18,27"/>`,
+    10:`<polygon ${S} points="32,3 57,27 32,61 7,27"/><path ${L} d="M7 27H57M32 3V61"/>`,
+    8:`<polygon ${S} points="32,3 59,32 32,61 5,32"/><path ${L} d="M5 32H59"/>`,
+    6:`<polygon ${S} points="32,5 55,18 55,46 32,59 9,46 9,18"/><path ${L} d="M32 32V59M32 32L9 18M32 32L55 18"/>`,
+    4:`<polygon ${S} points="32,6 59,55 5,55"/><path ${L} d="M32 6V40M5 55L32 40L59 55"/>`,
+    2:`<circle ${S} cx="32" cy="32" r="27"/><circle ${L} cx="32" cy="32" r="19"/>`};
+  const sh=P[n]||`<polygon ${S} points="22,5 42,5 59,22 59,42 42,59 22,59 5,42 5,22"/>`;
+  const y=n===4?47:n===20?36:37;
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${sh}<text x="32" y="${y}" text-anchor="middle" font-size="${n>99?12:15}" font-family="Caveat Brush,cursive" fill="var(--brown)">${n}</text></svg>`;
+}
+const dsel=()=>Object.keys(DS).map(Number).filter(f=>DS[f]>0).sort((a,b)=>b-a);
+function renderDice(){
+  const sum=dsel().map(f=>DS[f]+"d"+f).join(" + ");
+  E("dice").innerHTML=`<div class="dr">`+[...STD,...CUST].map(f=>`<div class="dd"><button class="dsel" data-f="${f}" aria-label="Adicionar d${f}">${dieSVG(f)}<span class="dn">d${f}</span>${DS[f]?`<span class="db">${DS[f]}</span>`:""}</button><button class="lk" data-m="${f}" aria-label="Remover d${f}">−</button></div>`).join("")+`</div>
+  <div class="cr" style="margin-top:10px"><input id="cf" type="number" min="2" max="1000" placeholder="Dado personalizado: faces"><button class="btn nb" id="cadd">Criar dado</button></div>
+  <p class="empty">${sum||"Toque nos dados para escolher quantos rolar."}</p>
+  <div class="cr"><button class="btn" id="dgo">Jogar</button><button class="btn nb" id="dclr">Limpar</button></div>${DRES}`;
+}
+function diceClick(e){
+  const t=e.target.closest("button");if(!t)return;
+  if(t.dataset.f){DS[t.dataset.f]=Math.min((DS[t.dataset.f]||0)+1,99)}
+  else if(t.dataset.m){DS[t.dataset.m]=Math.max((DS[t.dataset.m]||0)-1,0)}
+  else if(t.id==="cadd"){
+    const f=Math.floor(Number(E("cf").value));
+    if(!(f>=2&&f<=1000)){toast("Use um dado de 2 a 1000 faces");return}
+    if(!STD.includes(f)&&!CUST.includes(f))CUST.push(f);
+    DS[f]=Math.max(DS[f]||0,1);
+  }
+  else if(t.id==="dclr"){DS={};DRES=""}
+  else if(t.id==="dgo"){rollDice();return}
+  else return;
+  renderDice();
+}
+function rollDice(){
+  const g=dsel(),n=g.reduce((s,f)=>s+DS[f],0);
+  if(!n){toast("Escolha ao menos um dado");return}
+  if(n>100){toast("Máximo de 100 dados por jogada");return}
+  let total=0;const rolls=[];
+  const det=g.map(f=>{const r=Array.from({length:DS[f]},()=>rnd(f));total+=r.reduce((a,b)=>a+b,0);rolls.push(...r);return `${DS[f]}d${f}: ${r.join(", ")}`}).join(" | ");
+  const label=g.map(f=>DS[f]+"d"+f).join(" + ");
+  DRES=`<div class="ri"><b>${label}</b><br>${esc(det)} = <b>${total}</b></div>`;
+  renderDice();toast(`${label} = ${total}`);
+  send({who:CHARS.find(c=>c[0]===cur)[1],label,det,rolls,total});
+}
 const h=location.hash.slice(1);if(CHARS.some(c=>c[0]===h))open(h);
 </script>
+<div id="pk" class="pk hidden"><div class="pkb"><div class="pkh"><h3 id="pkt"></h3><div class="cr"><input id="pks" placeholder="Buscar…" autocomplete="off"><button class="btn" id="pkx">Fechar</button></div></div><div id="pkl"></div></div></div>
 <div id="toast" role="status"></div>
 </body>
 </html>
