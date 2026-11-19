@@ -128,6 +128,16 @@ select{cursor:pointer}
 .pkb h3{color:var(--brown);margin:10px 0 4px;font-size:22px}
 .pe{all:unset;display:block;width:100%;box-sizing:border-box;cursor:pointer;padding:8px;border-bottom:1px solid rgba(91,52,32,.25)}
 .pe:hover,.pe:focus-visible{background:var(--field)}.pe small{display:block;color:var(--brown2)}
+.vb{display:flex;align-items:center;gap:6px;margin:4px 0 8px}
+.vbtn{all:unset;cursor:pointer;width:34px;height:34px;border-radius:50%;background:var(--brown);color:var(--cream);display:grid;place-items:center;font-size:22px;flex:none;user-select:none}
+.vbtn:focus-visible{outline:3px solid var(--gold)}.vbtn:active{transform:scale(.9)}
+.bar2{position:relative;flex:1;height:30px;border-radius:15px;overflow:hidden;border:2px solid var(--brown);background:rgba(0,0,0,.2)}
+.bar2 .fill{position:absolute;inset:0 auto 0 0;width:0;transition:width .2s}
+.bar2.pv .fill{background:linear-gradient(#ef5350,#b71c1c)}
+.bar2.pc .fill{background:linear-gradient(#42a5f5,#1565c0)}
+.bar2 span{position:relative;display:block;text-align:center;line-height:26px;color:#fff;font-weight:bold;text-shadow:0 1px 2px #000}
+.stp{display:flex;align-items:center;justify-content:center;gap:6px}
+.stp output{font-size:24px!important;min-width:46px}
 </style>
 </head>
 <body>
@@ -142,6 +152,8 @@ select{cursor:pointer}
   </div>
   <div id="sheet" class="hidden"></div>
 </div>
+<div id="pk" class="pk hidden"><div class="pkb"><div class="pkh"><h3 id="pkt"></h3><div class="cr"><input id="pks" placeholder="Buscar…" autocomplete="off"><button class="btn" id="pkx">Fechar</button></div></div><div id="pkl"></div></div></div>
+<div id="toast" role="status"></div>
 <script>
 // ===== CONFIGURAÇÃO =====
 // Cole aqui o endereço do seu Firebase Realtime Database, por exemplo:
@@ -191,12 +203,12 @@ function open(id){
       ${ATTRS.map(a=>`<div class="at ${a}">${f("a_"+a,"number")}<span>${a}</span></div>`).join("")}
      </div>
      <div class="vit">
-      <div><div class="mini">Defesa (CD)<output id="o_cd">0</output><small>Equipamento</small>${f("equip","number","num")}</div><div class="mini">Substituição<output id="o_sub">0</output><small id="o_subn">Nível 1</small></div></div>
+      <div><div class="mini">Defesa (CD)<output id="o_cd">0</output><small>Equipamento</small>${f("equip","number","num")}</div><div class="mini">Substituição<div class="stp"><button class="vbtn" data-bar="sub" data-d="-1" aria-label="Diminuir Substituição">−</button><output id="o_subc">0/0</output><button class="vbtn" data-bar="sub" data-d="1" aria-label="Aumentar Substituição">+</button></div><small id="o_subn">Nível 1</small><output id="o_sub" style="display:none">0</output></div></div>
       <div>
        <div class="vh">Pontos de Vida (PV)</div>
-       <div class="pair"><div>Máximos<output id="o_pvm">0</output></div><div>Atuais${f("pv_at","number")}</div></div>
-       <div class="vh">Pontos de Chakra (PC)</div>
-       <div class="pair"><div>Máximos<output id="o_pcm">0</output></div><div>Atuais${f("pc_at","number")}</div></div>
+       <div class="vb"><button class="vbtn" data-bar="pv" data-d="-1" aria-label="Diminuir PV">−</button><div class="bar2 pv"><div class="fill" id="f_pv"></div><span id="t_pv">0 / 0</span></div><button class="vbtn" data-bar="pv" data-d="1" aria-label="Aumentar PV">+</button><output id="o_pvm" style="display:none">0</output></div>
+       <div class="vh">Chakra (CK)</div>
+       <div class="vb"><button class="vbtn" data-bar="pc" data-d="-1" aria-label="Diminuir CK">−</button><div class="bar2 pc"><div class="fill" id="f_pc"></div><span id="t_pc">0 / 0</span></div><button class="vbtn" data-bar="pc" data-d="1" aria-label="Aumentar CK">+</button><output id="o_pcm" style="display:none">0</output></div>
       </div>
      </div>
     </div>
@@ -250,6 +262,12 @@ function calc(){
   E("o_pcm").value=7+up*(1+n("a_ESP"));
   E("o_cd").value=cdB+tot[4]+n("equip");
   const sl=lvl>=10?3:lvl>=5?2:1;E("o_sub").value=SUBB[sl]+n("a_PRE");E("o_subn").textContent="Nível "+sl+" (+"+SUBB[sl]+")";
+  [["pv","o_pvm"],["pc","o_pcm"],["sub","o_sub"]].forEach(([k,o])=>{
+    const max=Number(E(o).value)||0;let c=d[k+"_at"];
+    c=(c===undefined||c==="")?max:Math.min(Math.max(Number(c)||0,0),max);
+    if(k==="sub")E("o_subc").value=c+"/"+max;
+    else{E("f_"+k).style.width=(max?c/max*100:0)+"%";E("t_"+k).textContent=c+" / "+max}
+  });
   window.TOT=tot;applyPal();
 }
 
@@ -265,7 +283,13 @@ function renderList(k){
     return `<div class="it" data-l="${k}" data-i="${i}"><button class="ith" data-act="tog" aria-expanded="${!!x.o}"><span class="chev">${x.o?"▴":"▾"}</span><b>${esc(x.t)||"Sem título"}</b></button>`+(x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título"><textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
   }).join("");
 }
+function barStep(k,dl){
+  const d=DB[cur],max=Number(E({pv:"o_pvm",pc:"o_pcm",sub:"o_sub"}[k]).value)||0;
+  let c=d[k+"_at"];c=(c===undefined||c==="")?max:Number(c)||0;
+  d[k+"_at"]=Math.min(Math.max(c+dl,0),max);calc();persist();
+}
 function listClick(e){
+  const bb=e.target.closest("[data-bar]");if(bb){barStep(bb.dataset.bar,+bb.dataset.d);return}
   const rr=e.target.closest("[data-roll]");if(rr){rollSkill(+rr.dataset.roll);return}
   const a=e.target.closest("[data-act]");if(!a)return;
   const act=a.dataset.act;let k;
@@ -550,7 +574,7 @@ E("pk").onclick=e=>{if(e.target===E("pk"))E("pk").classList.add("hidden")};
 E("pkl").onclick=e=>{
   const b=e.target.closest(".pe");if(!b||!cur)return;
   const x=CAT[CATK[PK]][+b.dataset.i];
-  arr(PK).push({t:x[1],b:x[2],o:false});renderList(PK);persist();toast("Adicionado: "+x[1]);
+  arr(PK).push({t:x[1],b:x[2],o:false});renderList(PK);persist();toast("Adicionado: "+x[1]);E("pk").classList.add("hidden");
 };
 const STD=[20,12,10,8,6,4,2];let DS={},CUST=[],DRES="";
 function dieSVG(n){
@@ -603,7 +627,5 @@ function rollDice(){
 }
 const h=location.hash.slice(1);if(CHARS.some(c=>c[0]===h))open(h);
 </script>
-<div id="pk" class="pk hidden"><div class="pkb"><div class="pkh"><h3 id="pkt"></h3><div class="cr"><input id="pks" placeholder="Buscar…" autocomplete="off"><button class="btn" id="pkx">Fechar</button></div></div><div id="pkl"></div></div></div>
-<div id="toast" role="status"></div>
 </body>
 </html>
