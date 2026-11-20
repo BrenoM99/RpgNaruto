@@ -151,13 +151,14 @@ select{cursor:pointer}
 .wb svg{width:26px;height:26px}.wr small{color:var(--brown2);margin-left:auto}
 .ib .wr{background:none;border-top:0;padding:0 0 8px}
 .mmb{color:var(--gold)!important}
-body.curse{background:radial-gradient(circle at 50% 0,#2a1f2e,#0b070d 75%) fixed}
-.curse .frame,.curse .pg{background:rgba(12,7,14,.55);box-shadow:0 0 28px rgba(224,83,61,.35)}
-.curse .panel>.body,.curse .ib,.curse .wr,.curse .pkb,.curse .pkh{background:rgba(24,16,28,.95)}
-.curse .per .n,.curse .per .rl,.curse .dn,.curse .nb,.curse .wb,.curse .ph,.curse .empty,.curse .wr small,.curse .at span,.curse .pkb h3,.curse .lbl,.curse .saved{color:#e3a1a8!important}
-.curse .nb,.curse .wb{border-color:#a8404c!important}
-.curse .dsel text{fill:#e3a1a8}.curse .rm{color:#ff7a70}.curse .ok{color:#7fd48a}
-.curse .at{box-shadow:0 0 10px rgba(224,83,61,.5)}
+body.curse{background:radial-gradient(circle at 50% 0,#241a38,#08050e 75%) fixed}
+.curse .frame,.curse .pg{background:rgba(10,6,18,.55);box-shadow:0 0 28px rgba(176,124,255,.35)}
+.curse .panel>.body,.curse .ib,.curse .wr,.curse .pkb,.curse .pkh{background:rgba(20,14,32,.95)}
+.curse .per .n,.curse .per .rl,.curse .dn,.curse .nb,.curse .wb,.curse .ph,.curse .empty,.curse .wr small,.curse .at span,.curse .pkb h3,.curse .lbl,.curse .saved{color:#cdb0f5!important}
+.curse .nb,.curse .wb{border-color:#8a5cc2!important}
+.curse .dsel text{fill:#cdb0f5}.curse .rm{color:#e6a8ff}.curse .ok{color:#7fd48a}
+.curse .at{box-shadow:0 0 10px rgba(176,124,255,.5)}
+.tg.on{background:#7b3fc4;color:#fff}
 </style>
 </head>
 <body>
@@ -264,7 +265,7 @@ const PAT={Nenhuma:0,Gennin:0,Chunnin:4,Jounin:4,Hokage:5};
 const SUBB=[0,2,3,4];
 const MM=["FOR","DES","CON","ESP"];
 const isCursed=d=>((d.L||{}).hab||[]).some(x=>x.on&&hn(x.t).includes("marca da maldicao"));
-const CURSE={"--paper1":"#2a1f2e","--paper2":"#0b070d","--brown":"#7d1f2e","--brown2":"#a8404c","--cream":"#f0e2d8","--gold":"#e0533d","--field":"#2a2030","--ink":"#eadfd8"};
+const CURSE={"--paper1":"#241a38","--paper2":"#08050e","--brown":"#512a85","--brown2":"#8a5cc2","--cream":"#efe6fa","--gold":"#b07cff","--field":"#251c38","--ink":"#e8def5"};
 const BIJU=[["shukaku",35,14],["matatabi",30,12],["isobu",25,10],["son gokuu",35,14],["kokuou",25,10],["saiken",25,10],["choumei",30,12],["gyuuki",35,14],["kurama",40,15]];
 const hn=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
 const fmtN=v=>(Math.round(v*100)/100).toLocaleString("pt-BR");
@@ -295,12 +296,12 @@ function calc(){
   document.querySelectorAll("[data-attr]").forEach(o=>o.value=A(o.dataset.attr));
   document.querySelectorAll("[data-tr]").forEach(o=>o.value=d["sk"+o.dataset.tr+"_t"]?lvl:0);
   document.querySelectorAll("[data-tot]").forEach(o=>{const i=+o.dataset.tot;tot[i]=A(o.dataset.a)+(d["sk"+i+"_t"]?lvl:0)+n("sk"+i+"_b");o.value=tot[i]});
-  E("o_pvm").value=pvB+(PAT[d.patente]||0)+up*(3+A("CON"));
+  E("o_pvm").value=pvB+(PAT[d.patente]||0)+up*(3+n("a_CON"));
   const habs=((d.L||{}).hab||[]).map(x=>hn(x.t));let pcb=0,bj=null;
   habs.forEach(t=>{if(/chakra (incessante|ilimitado)/.test(t))pcb+=2*lvl});
   for(const b of BIJU){if(habs.some(t=>t.includes(b[0]))){bj=b;break}}
   if(bj)pcb+=bj[2];
-  E("o_pcm").value=7+up*(1+A("ESP"))+pcb;
+  E("o_pcm").value=7+up*(1+n("a_ESP"))+pcb;
   E("o_bck").value=bj?bj[1]:0;E("bckrow").style.display=bj?"":"none";E("bckn").textContent=bj?"("+bj[0]+")":"";
   E("o_cdn").value=10+(tot[14]||0);E("o_cdg").value=10+(tot[11]||0);
   E("o_cd").value=cdB+(tot[4]||0)+n("equip");
@@ -352,10 +353,11 @@ function renderList(k){
     const x=a[i],ed=ED.has(x);
     let tags="";
     if(k==="jut"){const c=jCost(x),e=jEl(x),ok=aff.includes(e);tags=`<span class="tags">${c!=null?`<span class="tg">${c} Ck</span>`:""}${e?`<span class="tg ${ok?"ok":"no"}">${e}${ok?" ✓ afinidade":""}</span>`:""}</span>`}
+    if(k==="hab"&&x.on&&hn(x.t).includes("marca da maldicao"))tags='<span class="tags"><span class="tg on">Ligada</span></span>';
     const w=k==="inv"?parseWeapon(x):null;
     return `<div class="it" data-l="${k}" data-i="${i}"><button class="ith" data-act="tog" aria-expanded="${!!x.o}"><span class="chev">${x.o?"▴":"▾"}</span><b>${esc(x.t)||"Sem título"}</b>${k==="inv"&&itemSp(x)?`<small style="margin-left:auto;margin-right:8px">${fmtN(itemSp(x))} esp.</small>`:""}${tags}</button>`+
-    (k==="hab"&&hn(x.t).includes("marca da maldicao")?`<div class="wr"><button class="lk wb mmb" data-act="mm">${x.on?"● Ligada — desligar":"○ Desligada — ligar"}</button><small>${x.on?"+2 FOR/DES/CON/ESP · PV e CK temporários":"toque para ativar"}</small></div>`:"")+
-    (x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título">${k==="inv"?`<input class="es" type="number" step="0.25" min="0" placeholder="Espaço do item" value="${typeof x.s==="number"?x.s:itemSp(x)||""}" style="margin-top:6px">`:""}${k==="jut"?`<div class="cr" style="margin-top:6px"><input class="ec" type="number" min="0" placeholder="Custo de Ck" value="${jCost(x)??""}"><select class="ee"><option value="">Sem elemento</option>${ELOPT.map(o=>`<option${jEl(x)===o?" selected":""}>${o}</option>`).join("")}</select></div>`:""}<textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`${w?`<div class="wr"><button class="lk wb" data-act="atk" data-s="0">${dieSVG(20)}Taijutsu</button><button class="lk wb" data-act="atk" data-s="3">${dieSVG(20)}Pontaria</button><button class="lk wb" data-act="dmg">${dieSVG(w.f)}Dano</button><small>${w.n}d${w.f}${w.margin<20?" · crít. "+w.margin+"+":""} · ×${w.mult}</small></div>`:""}<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
+    
+    (x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título">${k==="inv"?`<input class="es" type="number" step="0.25" min="0" placeholder="Espaço do item" value="${typeof x.s==="number"?x.s:itemSp(x)||""}" style="margin-top:6px">`:""}${k==="jut"?`<div class="cr" style="margin-top:6px"><input class="ec" type="number" min="0" placeholder="Custo de Ck" value="${jCost(x)??""}"><select class="ee"><option value="">Sem elemento</option>${ELOPT.map(o=>`<option${jEl(x)===o?" selected":""}>${o}</option>`).join("")}</select></div>`:""}<textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`${k==="hab"&&hn(x.t).includes("marca da maldicao")?`<div class="wr"><button class="lk wb mmb" data-act="mm">${x.on?"● Ligada — desligar":"○ Desligada — ligar"}</button><small>${x.on?"+2 FOR/DES/CON/ESP · PV e CK temporários":"ativa a Marca"}</small></div>`:""}${w?`<div class="wr"><button class="lk wb" data-act="atk" data-s="0">${dieSVG(20)}Taijutsu</button><button class="lk wb" data-act="atk" data-s="3">${dieSVG(20)}Pontaria</button><button class="lk wb" data-act="dmg">${dieSVG(w.f)}Dano</button><small>${w.n}d${w.f}${w.margin<20?" · crít. "+w.margin+"+":""} · ×${w.mult}</small></div>`:""}<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
   }).join("");
   if(k==="inv")updInv();
 }
