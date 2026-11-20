@@ -149,6 +149,15 @@ select{cursor:pointer}
 .wr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px;background:var(--field);border-top:3px solid var(--gold)}
 .wb{display:inline-flex!important;align-items:center;gap:4px;border:2px solid var(--brown)!important;border-radius:4px;padding:2px 8px!important;color:var(--brown)}
 .wb svg{width:26px;height:26px}.wr small{color:var(--brown2);margin-left:auto}
+.ib .wr{background:none;border-top:0;padding:0 0 8px}
+.mmb{color:var(--gold)!important}
+body.curse{background:radial-gradient(circle at 50% 0,#2a1f2e,#0b070d 75%) fixed}
+.curse .frame,.curse .pg{background:rgba(12,7,14,.55);box-shadow:0 0 28px rgba(224,83,61,.35)}
+.curse .panel>.body,.curse .ib,.curse .wr,.curse .pkb,.curse .pkh{background:rgba(24,16,28,.95)}
+.curse .per .n,.curse .per .rl,.curse .dn,.curse .nb,.curse .wb,.curse .ph,.curse .empty,.curse .wr small,.curse .at span,.curse .pkb h3,.curse .lbl,.curse .saved{color:#e3a1a8!important}
+.curse .nb,.curse .wb{border-color:#a8404c!important}
+.curse .dsel text{fill:#e3a1a8}.curse .rm{color:#ff7a70}.curse .ok{color:#7fd48a}
+.curse .at{box-shadow:0 0 10px rgba(224,83,61,.5)}
 </style>
 </head>
 <body>
@@ -211,7 +220,7 @@ function open(id){
    <div class="grid">
     <div>
      <div class="attrs"><div class="hex">ATRIBUTOS</div>
-      ${ATTRS.map(a=>`<div class="at ${a}">${f("a_"+a,"number")}<span>${a}</span></div>`).join("")}
+      ${ATTRS.map(a=>`<div class="at ${a}">${f("a_"+a,"number")}<span data-lab="${a}">${a}</span></div>`).join("")}
      </div>
      <div class="vit">
       <div><div class="mini">Defesa (CD)<output id="o_cd">0</output><small>Equipamento</small>${f("equip","number","num")}</div></div>
@@ -253,6 +262,9 @@ function open(id){
 }
 const PAT={Nenhuma:0,Gennin:0,Chunnin:4,Jounin:4,Hokage:5};
 const SUBB=[0,2,3,4];
+const MM=["FOR","DES","CON","ESP"];
+const isCursed=d=>((d.L||{}).hab||[]).some(x=>x.on&&hn(x.t).includes("marca da maldicao"));
+const CURSE={"--paper1":"#2a1f2e","--paper2":"#0b070d","--brown":"#7d1f2e","--brown2":"#a8404c","--cream":"#f0e2d8","--gold":"#e0533d","--field":"#2a2030","--ink":"#eadfd8"};
 const BIJU=[["shukaku",35,14],["matatabi",30,12],["isobu",25,10],["son gokuu",35,14],["kokuou",25,10],["saiken",25,10],["choumei",30,12],["gyuuki",35,14],["kurama",40,15]];
 const hn=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
 const fmtN=v=>(Math.round(v*100)/100).toLocaleString("pt-BR");
@@ -260,7 +272,7 @@ const ESP_RE=/Espa[çc]o\s*(\d+(?:[.,]\d+)?)/i;
 function itemSp(x){if(typeof x.s==="number")return x.s;const m=ESP_RE.exec(x.b||"");return m?Number(m[1].replace(",",".")):0}
 function updInv(){
   const el=E("invsp");if(!el||!cur)return;const d=DB[cur]||{};
-  let max=5+(Number(d.a_FOR)||0);
+  let max=5+(Number(d.a_FOR)||0)+(isCursed(d)?2:0);
   ((d.L||{}).hab||[]).forEach(x=>{if(/^organizado/.test(hn(x.t)))max+=/\bmen(te)?\b/i.test(x.b||"")?(Number(d.a_MEN)||0):3});
   const used=((d.L||{}).inv||[]).reduce((s,x)=>s+itemSp(x),0);
   el.textContent="Espaço: "+fmtN(used)+" / "+fmtN(max);el.style.color=used>max?"#a3281f":"";el.style.fontWeight="bold";
@@ -273,27 +285,30 @@ leorio:{"--paper1":"#eef3f8","--paper2":"#c3d0e0","--brown":"#26324a","--brown2"
 isurama:{"--paper1":"#f1f2f9","--paper2":"#c4c8de","--brown":"#15151c","--brown2":"#3b3c55","--cream":"#eceefa","--gold":"#9aa6d4","--field":"#fafbff","--ink":"#15151c"},
 han:{"--paper1":"#f4eed8","--paper2":"#d6c7a2","--brown":"#17121a","--brown2":"#6e1a30","--cream":"#efe9cf","--gold":"#c9a8a0","--field":"#fbf7e8","--ink":"#1b0f14"}};
 function applyPal(){const s=document.body.style;["--paper1","--paper2","--brown","--brown2","--cream","--gold","--field","--ink"].forEach(v=>s.removeProperty(v));
- if(cur&&DB[cur]&&DB[cur].pal){const p=PAL[cur];for(const v in p)s.setProperty(v,p[v])}}
+ const cu=cur&&DB[cur]&&isCursed(DB[cur]);document.body.classList.toggle("curse",!!cu);
+ if(cu||(cur&&DB[cur]&&DB[cur].pal)){const p=cu?CURSE:PAL[cur];for(const v in p)s.setProperty(v,p[v])}}
 function calc(){
   const d=DB[cur]||{},n=k=>Number(d[k])||0;
+  const mm=isCursed(d),A=k=>n("a_"+k)+(mm&&MM.includes(k)?2:0);if(!mm){d.pvt=0;d.pct=0}
+  document.querySelectorAll("[data-lab]").forEach(o=>o.textContent=o.dataset.lab+(mm&&MM.includes(o.dataset.lab)?" +2":""));
   const lvl=Math.min(Math.max(n("nivel"),1),15),up=Math.max(lvl-1,0),[pvB,cdB]=ageBase(n("idade")),tot=[];
-  document.querySelectorAll("[data-attr]").forEach(o=>o.value=n("a_"+o.dataset.attr));
+  document.querySelectorAll("[data-attr]").forEach(o=>o.value=A(o.dataset.attr));
   document.querySelectorAll("[data-tr]").forEach(o=>o.value=d["sk"+o.dataset.tr+"_t"]?lvl:0);
-  document.querySelectorAll("[data-tot]").forEach(o=>{const i=+o.dataset.tot;tot[i]=n("a_"+o.dataset.a)+(d["sk"+i+"_t"]?lvl:0)+n("sk"+i+"_b");o.value=tot[i]});
-  E("o_pvm").value=pvB+(PAT[d.patente]||0)+up*(3+n("a_CON"));
+  document.querySelectorAll("[data-tot]").forEach(o=>{const i=+o.dataset.tot;tot[i]=A(o.dataset.a)+(d["sk"+i+"_t"]?lvl:0)+n("sk"+i+"_b");o.value=tot[i]});
+  E("o_pvm").value=pvB+(PAT[d.patente]||0)+up*(3+A("CON"));
   const habs=((d.L||{}).hab||[]).map(x=>hn(x.t));let pcb=0,bj=null;
   habs.forEach(t=>{if(/chakra (incessante|ilimitado)/.test(t))pcb+=2*lvl});
   for(const b of BIJU){if(habs.some(t=>t.includes(b[0]))){bj=b;break}}
   if(bj)pcb+=bj[2];
-  E("o_pcm").value=7+up*(1+n("a_ESP"))+pcb;
+  E("o_pcm").value=7+up*(1+A("ESP"))+pcb;
   E("o_bck").value=bj?bj[1]:0;E("bckrow").style.display=bj?"":"none";E("bckn").textContent=bj?"("+bj[0]+")":"";
   E("o_cdn").value=10+(tot[14]||0);E("o_cdg").value=10+(tot[11]||0);
   E("o_cd").value=cdB+(tot[4]||0)+n("equip");
-  const sl=lvl>=10?3:lvl>=5?2:1;E("o_sub").value=SUBB[sl]+n("a_PRE");E("o_subn").textContent="Nível "+sl+" (+"+SUBB[sl]+")";
+  const sl=lvl>=10?3:lvl>=5?2:1;E("o_sub").value=SUBB[sl]+A("PRE");E("o_subn").textContent="Nível "+sl+" (+"+SUBB[sl]+")";
   [["pv","o_pvm"],["pc","o_pcm"],["sub","o_sub"],["bck","o_bck"]].forEach(([k,o])=>{
     const max=Number(E(o).value)||0;let c=d[k+"_at"];
     c=(c===undefined||c==="")?max:Math.min(Math.max(Number(c)||0,0),max);
-    E("f_"+k).style.width=(max?c/max*100:0)+"%";E("t_"+k).textContent=c+" / "+max;
+    E("f_"+k).style.width=(max?c/max*100:0)+"%";E("t_"+k).textContent=c+" / "+max+((k==="pv"||k==="pc")&&d[k+"t"]>0?"  +"+d[k+"t"]+" temp.":"");
   });
   window.TOT=tot;updInv();applyPal();
 }
@@ -314,13 +329,20 @@ function parseWeapon(x){
   if(c)c[1].split("/").forEach(s=>{s=s.trim();if(/^\d+x$/i.test(s))mult=parseInt(s);else if(/^\d+$/.test(s))margin=parseInt(s)});
   return{n:+d[1],f:+d[2],margin,mult};
 }
+const CRIT=new WeakSet();
 function rollAtk(x,si){
+  if(!parseWeapon(x))return;
+  const mod=(window.TOT||[])[si]||0,nat=rnd(20),hit=nat+mod,crit=nat>=parseWeapon(x).margin;
+  crit?CRIT.add(x):CRIT.delete(x);
+  toast(`${x.t} (${SK[si][0]}): d20 (${nat}) + ${mod} = ${hit}${crit?" · CRÍTICO! role o dano":""}`);
+  send({who:CHARS.find(c=>c[0]===cur)[1],label:x.t+" · "+SK[si][0],atk:true,nat,mod,hit,crit,rolls:[nat],total:hit});
+}
+function rollDmg(x){
   const w=parseWeapon(x);if(!w)return;
-  const mod=(window.TOT||[])[si]||0,nat=rnd(20),hit=nat+mod,crit=nat>=w.margin;
-  const nd=w.n*(crit?w.mult:1),rolls=Array.from({length:nd},()=>rnd(w.f)),dmg=rolls.reduce((a,b)=>a+b,0);
-  const expr=nd+"d"+w.f;
-  toast(`${x.t} (${SK[si][0]}): d20 (${nat}) + ${mod} = ${hit}${crit?" · CRÍTICO":""} · dano ${expr} = ${dmg}`);
-  send({who:CHARS.find(c=>c[0]===cur)[1],label:x.t+" · "+SK[si][0],atk:true,nat,mod,hit,crit,mult:w.mult,expr,rolls,total:dmg});
+  const crit=CRIT.has(x);CRIT.delete(x);
+  const nd=w.n*(crit?w.mult:1),rolls=Array.from({length:nd},()=>rnd(w.f)),dmg=rolls.reduce((a,b)=>a+b,0),expr=nd+"d"+w.f;
+  toast(`${x.t}: dano ${expr} = ${dmg}${crit?" (crítico)":""}`);
+  send({who:CHARS.find(c=>c[0]===cur)[1],label:x.t+" · Dano",dmgr:true,crit,mult:w.mult,expr,rolls,total:dmg});
 }
 function renderList(k){
   const a=arr(k),d=DB[cur]||{},aff=[d.elem,d.elem2].filter(Boolean);
@@ -332,13 +354,14 @@ function renderList(k){
     if(k==="jut"){const c=jCost(x),e=jEl(x),ok=aff.includes(e);tags=`<span class="tags">${c!=null?`<span class="tg">${c} Ck</span>`:""}${e?`<span class="tg ${ok?"ok":"no"}">${e}${ok?" ✓ afinidade":""}</span>`:""}</span>`}
     const w=k==="inv"?parseWeapon(x):null;
     return `<div class="it" data-l="${k}" data-i="${i}"><button class="ith" data-act="tog" aria-expanded="${!!x.o}"><span class="chev">${x.o?"▴":"▾"}</span><b>${esc(x.t)||"Sem título"}</b>${k==="inv"&&itemSp(x)?`<small style="margin-left:auto;margin-right:8px">${fmtN(itemSp(x))} esp.</small>`:""}${tags}</button>`+
-    (w?`<div class="wr"><button class="lk wb" data-act="atk" data-s="0">${dieSVG(20)}Taijutsu</button><button class="lk wb" data-act="atk" data-s="3">${dieSVG(20)}Pontaria</button><small>${w.n}d${w.f}${w.margin<20?" · crít. "+w.margin+"+":""} · ×${w.mult}</small></div>`:"")+
-    (x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título">${k==="inv"?`<input class="es" type="number" step="0.25" min="0" placeholder="Espaço do item" value="${typeof x.s==="number"?x.s:itemSp(x)||""}" style="margin-top:6px">`:""}${k==="jut"?`<div class="cr" style="margin-top:6px"><input class="ec" type="number" min="0" placeholder="Custo de Ck" value="${jCost(x)??""}"><select class="ee"><option value="">Sem elemento</option>${ELOPT.map(o=>`<option${jEl(x)===o?" selected":""}>${o}</option>`).join("")}</select></div>`:""}<textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
+    (k==="hab"&&hn(x.t).includes("marca da maldicao")?`<div class="wr"><button class="lk wb mmb" data-act="mm">${x.on?"● Ligada — desligar":"○ Desligada — ligar"}</button><small>${x.on?"+2 FOR/DES/CON/ESP · PV e CK temporários":"toque para ativar"}</small></div>`:"")+
+    (x.o?`<div class="ib">`+(ed?`<input class="et" value="${esc(x.t)}" placeholder="Título">${k==="inv"?`<input class="es" type="number" step="0.25" min="0" placeholder="Espaço do item" value="${typeof x.s==="number"?x.s:itemSp(x)||""}" style="margin-top:6px">`:""}${k==="jut"?`<div class="cr" style="margin-top:6px"><input class="ec" type="number" min="0" placeholder="Custo de Ck" value="${jCost(x)??""}"><select class="ee"><option value="">Sem elemento</option>${ELOPT.map(o=>`<option${jEl(x)===o?" selected":""}>${o}</option>`).join("")}</select></div>`:""}<textarea class="eb" placeholder="Descrição">${esc(x.b)}</textarea><div class="ft"><button class="lk rm" data-act="cx">Cancelar</button><button class="lk ok" data-act="sv">Salvar</button></div>`:`${w?`<div class="wr"><button class="lk wb" data-act="atk" data-s="0">${dieSVG(20)}Taijutsu</button><button class="lk wb" data-act="atk" data-s="3">${dieSVG(20)}Pontaria</button><button class="lk wb" data-act="dmg">${dieSVG(w.f)}Dano</button><small>${w.n}d${w.f}${w.margin<20?" · crít. "+w.margin+"+":""} · ×${w.mult}</small></div>`:""}<div class="bd">${esc(x.b)}</div><div class="ft"><button class="lk rm" data-act="rm">${CF.has(x)?"Confirmar remoção":"Remover"}</button><button class="lk ok" data-act="ed">Editar</button></div>`)+`</div>`:"")+`</div>`;
   }).join("");
   if(k==="inv")updInv();
 }
 function barStep(k,dl){
   const d=DB[cur],max=Number(E({pv:"o_pvm",pc:"o_pcm",sub:"o_sub",bck:"o_bck"}[k]).value)||0;
+  const tk={pv:"pvt",pc:"pct"}[k];if(tk&&dl<0&&(+d[tk]||0)>0){d[tk]=Math.max(0,d[tk]+dl);calc();persist();return}
   let c=d[k+"_at"];c=(c===undefined||c==="")?max:Number(c)||0;
   d[k+"_at"]=Math.min(Math.max(c+dl,0),max);calc();persist();
 }
@@ -353,6 +376,8 @@ function listClick(e){
     const it=a.closest(".it");if(!it)return;
     k=it.dataset.l;const i=+it.dataset.i,L=arr(k),x=L[i];
     if(act==="atk"){rollAtk(x,+a.dataset.s);return}
+    if(act==="dmg"){rollDmg(x);return}
+    if(act==="mm"){x.on=!x.on;calc();const dd=DB[cur];dd.pvt=x.on?Math.floor((Number(E("o_pvm").value)||0)/2):0;dd.pct=x.on?Math.floor((Number(E("o_pcm").value)||0)/2):0;calc();renderList(k);persist();return}
     if(act==="tog")x.o=!x.o;
     else if(act==="ed")ED.add(x);
     else if(act==="cx"){ED.delete(x);if(!x.t&&!x.b)L.splice(i,1)}
@@ -384,7 +409,8 @@ function drawChat(){
     return false;
   });
   E("clog").innerHTML=live.length?live.map(r=>`<div class="ri"><b>${esc(r.who)}</b> · ${esc(r.label)}<br>`+
-    (r.skill?`Dado natural <b>${r.rolls[0]}</b> + ${r.mod} = <b>${r.total}</b>`:r.atk?`Ataque: dado natural <b>${r.nat}</b> + ${r.mod} = <b>${r.hit}</b>${r.crit?" · <b>CRÍTICO ×"+r.mult+"</b>":""}<br>Dano ${r.expr}: [${r.rolls.join(", ")}] = <b>${r.total}</b>`:`${r.det?esc(r.det):"["+r.rolls.join(", ")+"]"} = <b>${r.total}</b>`)+
+    (r.skill?`Dado natural <b>${r.rolls[0]}</b> + ${r.mod} = <b>${r.total}</b>`
+:r.atk?`Acerto: dado natural <b>${r.nat}</b> + ${r.mod} = <b>${r.hit}</b>${r.crit?" · <b>CRÍTICO</b>":""}`:r.dmgr?`Dano ${r.expr}${r.crit?" (crítico ×"+r.mult+")":""}: [${r.rolls.join(", ")}] = <b>${r.total}</b>`:`${r.det?esc(r.det):"["+r.rolls.join(", ")+"]"} = <b>${r.total}</b>`)+
     `<small>${fmt(r.ts)}</small></div>`).join(""):`<p class="empty">Nenhuma rolagem nos últimos 8 minutos.</p>`;
 }
 setInterval(drawChat,15000);drawChat();
