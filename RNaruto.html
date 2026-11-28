@@ -161,6 +161,7 @@ body.curse{background:radial-gradient(circle at 50% 0,var(--paper1),var(--paper2
 .tg.on{background:#7b3fc4;color:#fff}
 .card .plus{font-size:44px;width:80px;text-align:center;color:var(--gold);flex:none}
 .pal+.pal{margin-left:8px}
+.sav.ph{image-rendering:auto;border-radius:8px;object-fit:cover;width:72px}
 </style>
 </head>
 <body>
@@ -176,7 +177,7 @@ body.curse{background:radial-gradient(circle at 50% 0,var(--paper1),var(--paper2
   <div id="sheet" class="hidden"></div>
 </div>
 <div id="pk" class="pk hidden"><div class="pkb"><div class="pkh"><h3 id="pkt"></h3><div class="cr"><input id="pks" placeholder="Buscar…" autocomplete="off"><button class="btn" id="pkx">Fechar</button></div></div><div id="pkl"></div></div></div>
-<div id="pw" class="pk hidden" style="align-items:center;padding:12px"><div class="pkb" style="max-height:none;border-radius:10px"><h3 id="pwt"></h3><div class="cr"><input id="pwi" type="password" placeholder="Senha" autocomplete="off" aria-label="Senha"><button class="btn" id="pwo">Entrar</button><button class="btn nb" id="pwx">Cancelar</button></div><p class="err" id="pwe"></p></div></div>
+<div id="pw" class="pk hidden" style="align-items:center;padding:12px"><div class="pkb" style="max-height:none;border-radius:10px"><h3 id="pwt"></h3><div class="cr"><input id="pwi" type="password" placeholder="Senha" autocomplete="off" aria-label="Senha"><button class="btn" id="pwo">Entrar</button><button class="btn nb" id="pwx">Cancelar</button></div><p class="err" id="pwe"></p><div class="cr" id="pwc" style="display:none"><button class="btn" id="pwy">Sim, criar a ficha</button><button class="btn nb" id="pwn">Não</button></div></div></div>
 <div id="toast" role="status"></div>
 <script>
 // ===== CONFIGURAÇÃO =====
@@ -208,7 +209,7 @@ function sel(k,o,blank){return `<select data-k="${k}">${blank?'<option value="">
 const EL=["Ar","Água","Terra","Fogo","Raio"];
 function ta(k,h){return `<textarea data-k="${k}" ${h?`style="min-height:${h}px"`:""}></textarea>`}
 
-E("cards").innerHTML=CHARS.map(([id,n])=>`<button class="card" data-id="${id}"><img class="av" alt="" src="${IMG[id]}"><span>${n}<small>Abrir ficha</small></span></button>`).join("")+`<button class="card" data-id="__new"><span class="plus">＋</span><span>Criar nova ficha<small>Novo personagem</small></span></button>`;
+E("cards").innerHTML=CHARS.map(([id,n])=>`<button class="card" data-id="${id}"><img class="av" alt="" src="${IMG[id]}"><span>${n}<small>Abrir ficha</small></span></button>`).join("")+`<button class="card" data-id="__new"><span class="plus">⋯</span><span>Outras Fichas<small>Acessar ou criar</small></span></button>`;
 E("cards").onclick=e=>{const b=e.target.closest(".card");if(b)gate(b.dataset.id)};
 
 function open(id){
@@ -216,7 +217,7 @@ function open(id){
   const name=SP[id]?SP[id].n:(CHARS.find(c=>c[0]===id)||[0,NAMES[id]])[1];
   E("menu").classList.add("hidden");E("sheet").classList.remove("hidden");
   E("sheet").innerHTML=`
-  <label class="pal"><input type="checkbox" data-k="pal"> Paleta</label>${id==="leorio"?`<label class="pal"><input type="checkbox" data-k="dark"> modo escuro pro Murilo parar de Yappin</label>`:""}<div class="bar"><button class="btn" id="back">‹ Personagens</button>${IMG[id]?`<img class="sav" alt="" src="${IMG[id]}">`:""}<span class="brush" style="font-size:26px">${name}</span><span class="saved" id="st">Salvo automaticamente</span></div>
+  <label class="pal"><input type="checkbox" data-k="pal"> Paleta</label>${id==="leorio"?`<label class="pal"><input type="checkbox" data-k="dark"> modo escuro pro Murilo parar de Yappin</label>`:""}<div class="bar"><button class="btn" id="back">‹ Personagens</button>${IMG[id]?`<img class="sav" alt="" src="${IMG[id]}">`:DB[id].photo?`<img class="sav ph" alt="" src="${DB[id].photo}">`:`<label class="btn" style="cursor:pointer">Adicionar foto<input type="file" accept="image/*" id="phf" hidden></label>`}<span class="brush" style="font-size:26px">${name}</span><span class="saved" id="st">Salvo automaticamente</span></div>
   <div class="frame"><div class="spread"><div class="pg">
    <div class="head">
     <div><label>Nome</label>${f("nome")}</div><div><label>Idade</label>${f("idade","number","num")}</div><div><label>Jogador</label>${f("jogador")}</div>
@@ -257,13 +258,23 @@ function open(id){
     if(el.type==="checkbox")el.checked=!!v;else if(v!==undefined)el.value=v;
   });
   calc();{const c1=syncGrant(isCursed(d)),c2=syncAff();if(c1||c2)persist()}renderAll();E("sheet").onclick=listClick;DS={};DRES="";renderDice();E("dice").onclick=diceClick;
+  const pf=E("phf");
+  if(pf)pf.onchange=()=>{
+    const f=pf.files[0];if(!f)return;const fr=new FileReader();
+    fr.onload=()=>{const im=new Image();
+      im.onload=()=>{const s=Math.min(1,200/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.width*s));c.height=Math.max(1,Math.round(im.height*s));
+        const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+        DB[cur].photo=c.toDataURL("image/jpeg",.82);persist();open(cur)};
+      im.onerror=()=>toast("Não foi possível ler essa imagem");im.src=fr.result};
+    fr.readAsDataURL(f);
+  };
   E("back").onclick=()=>{E("sheet").classList.add("hidden");E("menu").classList.remove("hidden");cur=null;applyPal();history.replaceState(null,"",location.pathname)};
   E("sheet").oninput=E("sheet").onchange=e=>{
     const el=e.target;if(!el.dataset||!el.dataset.k)return;
     DB[cur][el.dataset.k]=el.type==="checkbox"?el.checked:el.value;
     calc();if(/^elem2?$/.test(el.dataset.k))renderList("jut");stat("Salvando…");clearTimeout(timer);timer=setTimeout(persist,300);
   };
-  if(id==="sy"||id==="isurama")history.replaceState(null,"",location.pathname);else location.hash=id;
+  if(id==="sy"||id==="isurama"||/^o_/.test(id))history.replaceState(null,"",location.pathname);else location.hash=id;
 }
 const PAT={Nenhuma:0,Gennin:0,Chunnin:4,Jounin:4,Hokage:5};
 const SUBB=[0,2,3,4];
@@ -469,7 +480,7 @@ function refreshSheet(){
   calc();if(!E("sheet").querySelector(".et"))renderAll();
 }
 function remote(id,s){
-  if(SLOTS[id]){RAW[id]=s;if(SK_[id])applySec(id);return}
+  if(SLOTS[id]||/^o_/.test(id)){RAW[id]=s;if(SK_[id])applySec(id);return}
   if(PEND.has(id)||!(CHARS.some(c=>c[0]===id)||id==="isurama"))return;
   let o;try{o=JSON.parse(s)}catch(e){return}
   if(JSON.stringify(DB[id]||{})===JSON.stringify(o))return;
@@ -775,16 +786,39 @@ async function unlockSec(id,pw){
 }
 function gate(id){
   if(id!=="__new"&&(SLOTS[id]?SK_[id]:(PH[id]==null||OKS.has(id)))){open(id);return}
-  GATE=id;E("pwt").textContent=id==="__new"?"Criar nova ficha":"Ficha de "+CHARS.find(c=>c[0]===id)[1];
-  E("pwi").value="";E("pwe").textContent="";E("pw").classList.remove("hidden");E("pwi").focus();
+  GATE=id;E("pwt").textContent=id==="__new"?"Outras Fichas":"Ficha de "+CHARS.find(c=>c[0]===id)[1];
+  E("pwi").value="";E("pwe").textContent="";E("pwc").style.display="none";E("pw").classList.remove("hidden");E("pwi").focus();
+}
+let PENDC=null;
+const PAL_OTHER={"--paper1":"#eef0f3","--paper2":"#c4cad6","--brown":"#34415a","--brown2":"#5f6f8f","--cream":"#f0f3f8","--gold":"#9fb2d6","--field":"#fafbfd","--ink":"#1b2230"};
+async function otherSheet(pw){
+  const id="o_"+hx(await sha("rpg2:"+pw)).slice(0,12),k=hx(await sha("sec1:"+pw)),ls="rpg-o:"+id;
+  SLOTS[id]={path:id,ls};SK_[id]=k;SP[id]={n:""};PAL[id]=PAL_OTHER;
+  let raw=RAW[id];
+  if(raw===undefined&&BASE){
+    try{const r=await fetch(`${BASE}/fichas/${id}.json`);if(!r.ok)throw 0;raw=await r.json()}catch(e){return{err:1}}
+  }
+  if(raw){RAW[id]=raw;const t=await dec(raw,k);if(t!==null){DB[id]=JSON.parse(t);return{id}}}
+  try{const l=localStorage.getItem(ls);if(l){const t=await dec(l,k);if(t!==null){DB[id]=JSON.parse(t);return{id}}}}catch(e){}
+  return{id,isNew:true};
+}
+async function pwCreate(){
+  const r=PENDC;if(!r)return;PENDC=null;E("pwc").style.display="none";E("pw").classList.add("hidden");
+  DB[r.id]={};open(r.id);persist();
 }
 async function pwGo(){
   const pw=E("pwi").value.trim().toLowerCase();if(!pw)return;
-  let ok=false,id=GATE;
+  let ok=false,id=GATE;E("pwc").style.display="none";PENDC=null;
   try{
     if(GATE==="__new"){
       if(PHI.includes(hx(await sha("rpg1:isurama:"+pw)))){ok=true;id="isurama"}
       else if(await unlockSec("sy",pw)){ok=true;id="sy"}
+      else{
+        const r=await otherSheet(pw);
+        if(r.err){E("pwe").textContent="Sem conexão para verificar essa senha. Tente de novo.";return}
+        if(r.isNew){PENDC=r;E("pwe").textContent="Nenhuma ficha usa essa senha. Tem certeza que quer criar uma nova ficha com ela?";E("pwc").style.display="flex";return}
+        ok=true;id=r.id;
+      }
     }else if(SLOTS[GATE])ok=await unlockSec(GATE,pw);
     else ok=hx(await sha("rpg1:"+GATE+":"+pw))===PH[GATE];
   }catch(e){ok=false}
@@ -793,9 +827,9 @@ async function pwGo(){
   if(!SLOTS[id]&&id!=="isurama"){OKS.add(id);try{sessionStorage.setItem("rpg-ok",JSON.stringify([...OKS]))}catch(e){}}
   open(id);
 }
-E("pwo").onclick=pwGo;E("pwx").onclick=()=>E("pw").classList.add("hidden");
+E("pwo").onclick=pwGo;E("pwy").onclick=pwCreate;E("pwn").onclick=()=>{E("pwc").style.display="none";E("pwe").textContent="";PENDC=null};E("pwx").onclick=()=>E("pw").classList.add("hidden");
 E("pwi").onkeydown=e=>{if(e.key==="Enter")pwGo()};
-E("pwi").oninput=()=>E("pwe").textContent="";
+E("pwi").oninput=()=>{E("pwe").textContent="";E("pwc").style.display="none";PENDC=null};
 const h=location.hash.slice(1);if(CHARS.some(c=>c[0]===h))gate(h);
 </script>
 </body>
